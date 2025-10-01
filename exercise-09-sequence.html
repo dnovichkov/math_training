@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Нумерация и последовательности — Тренажёр (2 класс)</title>
+  <meta name="description" content="Упражнение: найдите следующее или предыдущее число в последовательности; визуальный режим — угадайте следующую фигуру.">
+  <style>
+    :root{--bg:#f6fbff;--card:#fff;--accent:#2b8cff;--muted:#6b7280;--ok:#2aa653;--err:#e03d3d}
+    *{box-sizing:border-box}
+    body{margin:0;padding:14px;font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background:var(--bg);color:#071029}
+    .home-btn{display:inline-block;margin:10px 0;padding:10px 14px;font-size:16px;background-color:#4CAF50;color:white;border-radius:8px;text-decoration:none}
+    header{display:flex;gap:12px;align-items:center;max-width:980px;margin:0 auto 12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    h1{font-size:1.15rem;margin:0}
+    .meta{color:var(--muted);font-size:0.92rem}
+    main{max-width:980px;margin:0 auto;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.06)}
+    .controls{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    label{font-size:0.95rem}
+    select,input,button{padding:10px;border-radius:10px;border:1px solid #dbeafe;background:white}
+    .task{font-weight:800;font-size:1.4rem;text-align:center;margin-top:6px}
+    .sequence{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:14px;flex-wrap:wrap}
+    .seq-item{min-width:56px;min-height:56px;border-radius:8px;background:#f8fbff;border:1px solid #e6f2ff;display:flex;align-items:center;justify-content:center;font-size:1.15rem;font-weight:700}
+    .blank{background:#fff7e6;border:2px dashed #ffd08a}
+    .answer-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:12px}
+    .answer-row input{width:110px;text-align:center}
+    .visual-choices{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:12px;flex-wrap:wrap}
+    .shape-btn{width:56px;height:56px;border-radius:8px;border:1px solid #dbeafe;background:white;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .shape-btn.selected{outline:3px solid rgba(43,140,255,0.14)}
+    .feedback{min-height:48px;font-weight:700;text-align:center;margin-top:8px}
+    .feedback.ok{color:var(--ok)} .feedback.err{color:var(--err)}
+    .aside{margin-top:12px;color:var(--muted);font-size:0.95rem;text-align:center}
+    @media(min-width:880px){.controls{flex-direction:row}.sequence{justify-content:flex-start}}
+  </style>
+</head>
+<body>
+  <a href="index.html" class="home-btn">🏠 На главную</a>
+
+  <header>
+    <div class="logo">M2</div>
+    <div>
+      <h1>Нумерация и последовательности</h1>
+      <div class="meta">Шаги +1/+2 и др. — числовые и визуальные последовательности</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls" role="region" aria-label="Управление">
+      <div class="row">
+        <label for="level">Уровень</label>
+        <select id="level" aria-label="Уровень">
+          <option value="1">1 — шаг +1 (следующее/предыдущее)</option>
+          <option value="1.5">1.5 — вычитание/предыдущее (вариант)</option>
+          <option value="2">2 — шаг +2</option>
+          <option value="3">3 — смешанные шаги (1 или 2 или 3)</option>
+        </select>
+
+        <label for="mode">Режим</label>
+        <select id="mode" aria-label="Режим">
+          <option value="number">Числа</option>
+          <option value="visual">Визуальный (фигуры)</option>
+        </select>
+
+        <div style="margin-left:auto;color:var(--muted)">Лучшее: <span id="best">—</span></div>
+      </div>
+
+      <div class="row">
+        <label for="seriesCount">Серия (кол-во примеров)</label>
+        <input id="seriesCount" type="number" min="1" max="50" value="10" style="width:96px">
+        <label><input id="helpMode" type="checkbox"> Режим помощи</label>
+        <div style="margin-left:auto;color:var(--muted)">Прогресс: <span id="progress">0/10</span></div>
+      </div>
+    </div>
+
+    <section aria-labelledby="taskHeading">
+      <div class="task" id="taskText">—</div>
+
+      <div class="sequence" id="sequenceArea" aria-live="polite">
+        <!-- sequence items injected here -->
+      </div>
+
+      <div class="answer-row" id="answerRow">
+        <label id="answerLabel">Ответ: <input id="answerInput" type="number" inputmode="numeric"></label>
+        <div id="visualChoiceRow" style="display:none" class="visual-choices"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+        <button id="checkBtn">Проверить</button>
+        <button id="showBtn">Показать ответ</button>
+        <button id="skipBtn">Пропустить</button>
+      </div>
+
+      <div id="feedback" class="feedback" role="status" aria-live="polite">&nbsp;</div>
+
+      <div class="aside" id="hintBox">Включите «Режим помощи», если нужно подсказки.</div>
+    </section>
+  </main>
+
+<script>
+(function(){
+  // DOM
+  const levelEl = document.getElementById('level');
+  const modeEl = document.getElementById('mode');
+  const seriesCountEl = document.getElementById('seriesCount');
+  const helpModeEl = document.getElementById('helpMode');
+  const taskText = document.getElementById('taskText');
+  const sequenceArea = document.getElementById('sequenceArea');
+  const answerInput = document.getElementById('answerInput');
+  const visualChoiceRow = document.getElementById('visualChoiceRow');
+  const checkBtn = document.getElementById('checkBtn');
+  const showBtn = document.getElementById('showBtn');
+  const skipBtn = document.getElementById('skipBtn');
+  const feedback = document.getElementById('feedback');
+  const hintBox = document.getElementById('hintBox');
+  const progressEl = document.getElementById('progress');
+  const bestEl = document.getElementById('best');
+
+  // state
+  let seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'10',10));
+  let seriesCurrent = 0;
+  let current = null; // {type:'number'|'visual', seq:[], missingIndex, answer, meta...}
+  let best = parseInt(localStorage.getItem('seq_best')||'0',10) || 0;
+  bestEl.textContent = best>0 ? (best + '★') : '—';
+
+  // visual shapes set (simple svg strings) — keep natural, easy
+  const shapes = [
+    {name:'Круг', svg: '<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><circle cx="18" cy="18" r="12" fill="#ffb3b3"/></svg>'},
+    {name:'Квадрат', svg: '<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="6" width="24" height="24" rx="4" fill="#ffd08a"/></svg>'},
+    {name:'Треугольник', svg: '<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><polygon points="18,6 30,28 6,28" fill="#9fe6a0"/></svg>'},
+    {name:'Звезда', svg: '<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><path d="M18 6 L22 18 L34 18 L24 24 L28 34 L18 28 L8 34 L12 24 L2 18 L14 18 Z" fill="#a8d2ff"/></svg>'}
+  ];
+
+  // helpers
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+  function updateProgress(){
+    seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'10',10));
+    progressEl.textContent = `${seriesCurrent}/${seriesTotal}`;
+  }
+
+  // generator for number sequences
+  function genNumberSequence(level){
+    // produce a short sequence length 5, with one missing element (not first or last ideally)
+    // ensure natural numbers
+    const len = 5;
+    // Choose step according to level:
+    let step = 1;
+    if(level === '1') step = 1;
+    else if(level === '1.5') step = -1; // previous variant; but we'll treat as step -1 by asking previous
+    else if(level === '2') step = 2;
+    else if(level === '3') step = randInt(1,3);
+    // If level 1.5 (previous), we will ask for previous; treat generated sequence as descending? Simpler: we will generate increasing sequence but ask for previous position.
+    // Choose start so all numbers >=1
+    let startMin = 1;
+    // For positive step
+    if(step > 0){
+      const maxStart = Math.max(1, 100 - step* (len-1));
+      const start = randInt(1, maxStart);
+      const seq = Array.from({length:len}, (_,i) => start + i*step);
+      // choose missing index not 0 to allow previous/next tasks; but allow anywhere except make sure missing answer>=1
+      const miss = randInt(1, len-1); // avoid first to simplify
+      return {seq, missingIndex: miss, answer: seq[miss], step};
+    } else {
+      // negative step (used only for level 1.5 variant): produce decreasing by 1, but ensure numbers >=1
+      const stepPos = Math.abs(step);
+      const maxStart = Math.max(1, 100 - 0); // we'll construct descending: start must be >= len
+      const start = randInt(len+1, 50); // ensure space for decreasing
+      const seq = Array.from({length:len}, (_,i) => start - i*stepPos);
+      // choose missing index not last (so previous exists)
+      const miss = randInt(1, len-1);
+      return {seq, missingIndex: miss, answer: seq[miss], step: -stepPos};
+    }
+  }
+
+  // generator for visual sequences: repeating pattern of shapes maybe with rotation; choose missing last or some index
+  function genVisualSequence(){
+    // choose a pattern length 2..3 within available shapes
+    const patLen = randInt(2,3);
+    // pick pattern shapes
+    const pat = [];
+    for(let i=0;i<patLen;i++) pat.push(shapes[randInt(0, shapes.length-1)]);
+    const reps = 4; // create sequence length patLen*reps maybe 6-8, but keep display length 6
+    const seq = [];
+    for(let i=0;i<6;i++) seq.push(pat[i % patLen]);
+    // choose missing index (usually last)
+    const missingIndex = randInt(2,5);
+    const answerShape = seq[missingIndex];
+    return {seq, missingIndex, answerShape};
+  }
+
+  function renderSequence(item){
+    sequenceArea.innerHTML = '';
+    feedback.textContent = '';
+    // numeric
+    if(item.type === 'number'){
+      taskText.textContent = 'Заполните пропуск в числовой последовательности';
+      answerInput.style.display = '';
+      visualChoiceRow.style.display = 'none';
+      // build seq DOM
+      item.seq.forEach((v, idx) => {
+        const el = document.createElement('div');
+        el.className = 'seq-item' + (idx === item.missingIndex ? ' blank' : '');
+        el.textContent = idx === item.missingIndex ? '?' : String(v);
+        sequenceArea.appendChild(el);
+      });
+      // clear and focus input
+      answerInput.value = '';
+      answerInput.focus();
+      if(helpModeEl.checked){
+        hintBox.textContent = `Шаг последовательности: ${item.step>0? '+'+item.step: item.step}. Подумай, какое число идёт на месте вопроса.`;
+      } else {
+        hintBox.textContent = '';
+      }
+    } else {
+      // visual mode
+      taskText.textContent = 'Угадайте следующую фигуру в последовательности';
+      answerInput.style.display = 'none';
+      visualChoiceRow.style.display = '';
+      sequenceArea.innerHTML = '';
+      item.seq.forEach((sh, idx) => {
+        const el = document.createElement('div');
+        el.className = 'seq-item' + (idx === item.missingIndex ? ' blank' : '');
+        el.innerHTML = idx === item.missingIndex ? '?' : sh.svg;
+        sequenceArea.appendChild(el);
+      });
+      // build choice buttons
+      visualChoiceRow.innerHTML = '';
+      // build choices: include the right one and a few distractors
+      const correct = item.answerShape;
+      // create set of options (ensure unique)
+      const opts = [correct];
+      while(opts.length < 4){
+        const s = shapes[randInt(0, shapes.length-1)];
+        if(!opts.includes(s)) opts.push(s);
+      }
+      // shuffle
+      for(let i=opts.length-1;i>0;i--){ const j = randInt(0,i); [opts[i], opts[j]] = [opts[j], opts[i]]; }
+      opts.forEach((s, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'shape-btn';
+        btn.innerHTML = s.svg;
+        btn.title = s.name;
+        btn.dataset.idx = idx;
+        btn.addEventListener('click', ()=> {
+          // mark selection
+          Array.from(visualChoiceRow.children).forEach(n=>n.classList.remove('selected'));
+          btn.classList.add('selected');
+          // store selected in current._selected
+          current._selected = s;
+        });
+        visualChoiceRow.appendChild(btn);
+      });
+      if(helpModeEl.checked){
+        hintBox.textContent = 'Найдите закономерность в фигурах (повторяющийся паттерн).';
+      } else {
+        hintBox.textContent = '';
+      }
+    }
+    updateProgressDisplay();
+  }
+
+  function updateProgressDisplay(){ seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'10',10)); progressEl.textContent = `${seriesCurrent}/${seriesTotal}`; }
+
+  function genTask(){
+    const mode = modeEl.value;
+    const lvl = levelEl.value;
+    if(mode === 'number'){
+      const num = genNumberSequence(lvl);
+      current = {type:'number', seq: num.seq, missingIndex: num.missingIndex, answer: num.answer, step: num.step};
+    } else {
+      const vis = genVisualSequence();
+      current = {type:'visual', seq: vis.seq, missingIndex: vis.missingIndex, answerShape: vis.answerShape};
+    }
+    renderSequence(current);
+  }
+
+  function checkAnswer(){
+    if(!current) return;
+    if(current.type === 'number'){
+      const vRaw = answerInput.value.trim();
+      const v = vRaw === '' ? NaN : parseInt(vRaw,10);
+      if(Number.isNaN(v)){ feedback.className='feedback err'; feedback.textContent='Введите число.'; return; }
+      if(v === current.answer){
+        ok();
+      } else {
+        feedback.className='feedback err'; feedback.textContent=`Неправильно. Подумай ещё или нажми «Показать ответ».`; if(helpModeEl.checked) showExplanation(); saveResult(false);
+      }
+    } else {
+      const sel = current._selected || null;
+      if(!sel){ feedback.className='feedback err'; feedback.textContent='Выберите фигуру из вариантов.'; return; }
+      if(sel === current.answerShape){
+        ok();
+      } else {
+        feedback.className='feedback err'; feedback.textContent='Неверно — попробуй ещё.'; if(helpModeEl.checked) showVisualExplanation(); saveResult(false);
+      }
+    }
+  }
+
+  function ok(){
+    feedback.className='feedback ok'; feedback.textContent='Правильно!';
+    saveResult(true);
+    seriesCurrent += 1;
+    updateProgressDisplay();
+    // advance or finish
+    if(seriesCurrent >= seriesTotal){
+      setTimeout(endSeries, 700);
+    } else {
+      setTimeout(()=>{ genTask(); }, 700);
+    }
+  }
+
+  function showExplanation(){
+    if(current && current.type === 'number'){
+      feedback.className=''; feedback.textContent = `Решение: последовательность с шагом ${current.step>0? '+'+current.step : current.step}. Ответ: ${current.answer}.`;
+      answerInput.value = String(current.answer);
+    }
+  }
+  function showVisualExplanation(){
+    if(current && current.type === 'visual'){
+      feedback.className=''; feedback.textContent = `Решение: повторяющийся рисунок. Правильная фигура отмечена.`;
+      // highlight correct choice if present
+      Array.from(visualChoiceRow.children).forEach(btn=>{
+        btn.classList.remove('selected');
+        if(btn.title === current.answerShape.name){
+          btn.classList.add('selected');
+        }
+      });
+      current._selected = current.answerShape;
+    }
+  }
+
+  function showAnswer(){
+    if(!current) return;
+    if(current.type === 'number'){
+      answerInput.value = String(current.answer);
+      feedback.className=''; feedback.textContent = `Ответ: ${current.answer}`;
+    } else {
+      showVisualExplanation();
+    }
+  }
+
+  function skipTask(){
+    // mark as wrong and advance
+    saveResult(false);
+    seriesCurrent += 1;
+    updateProgressDisplay();
+    if(seriesCurrent >= seriesTotal) endSeries();
+    else genTask();
+  }
+
+  function endSeries(){
+    feedback.className=''; feedback.textContent = `Серия завершена: ${seriesCurrent}/${seriesTotal}.`;
+    // update best stored
+    const bestNow = parseInt(localStorage.getItem('seq_best')||'0',10) || 0;
+    const score = parseInt(localStorage.getItem('seq_score_current')||'0',10) || 0;
+    if(score > bestNow) localStorage.setItem('seq_best', String(score));
+    // reset for new series
+    seriesCurrent = 0;
+    updateProgressDisplay();
+  }
+
+  // scoring and persistence: simple streak of correct in a row saved as 'score'
+  function saveResult(ok){
+    // store running current score as number of consecutive correct in this series
+    let cur = parseInt(localStorage.getItem('seq_score_current')||'0',10) || 0;
+    if(ok) cur += 1; else cur = 0;
+    localStorage.setItem('seq_score_current', String(cur));
+    // update best display if improved
+    const bestNow = parseInt(localStorage.getItem('seq_best')||'0',10) || 0;
+    if(cur > bestNow) { localStorage.setItem('seq_best', String(cur)); bestEl.textContent = cur + '★'; }
+    else bestEl.textContent = bestNow>0 ? (bestNow + '★') : '—';
+  }
+
+  // events
+  checkBtn.addEventListener('click', checkAnswer);
+  showBtn.addEventListener('click', showAnswer);
+  skipBtn.addEventListener('click', skipTask);
+  seriesCountEl.addEventListener('change', ()=>{ updateProgress(); });
+  levelEl.addEventListener('change', ()=>{ genTask(); });
+  modeEl.addEventListener('change', ()=>{ genTask(); });
+  helpModeEl.addEventListener('change', ()=>{ if(helpModeEl.checked) hintBox.style.display = 'block'; else hintBox.style.display = 'none'; });
+
+  // keyboard: Enter to check
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter') { checkAnswer(); }
+  });
+
+  // init
+  updateProgress();
+  genTask();
+
+})();
+</script>
+</body>
+</html>
