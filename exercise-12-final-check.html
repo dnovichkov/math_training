@@ -129,11 +129,9 @@
   let finished = false;
 
   // ======= Question generators (all natural numbers only) =======
-  // We'll create a variety of question types, each returns {id, type, prompt, answer, explanation, renderAnswer(...) optional}
   let qIdCounter = 1;
 
-  function genSostavChisla(){ // "Состав числа": give A and ask B so A+B=N? We'll ask to provide one addend.
-    // choose N 2..20, pick a visible part a, ask "Составьте число N: какое число надо добавить к a?"
+  function genSostavChisla(){
     const N = randInt(2,20);
     const a = randInt(1, N-1);
     const correct = N - a;
@@ -147,7 +145,7 @@
     };
   }
 
-  function genComparison(){ // "Больше-меньше": compare two numbers
+  function genComparison(){
     const a = randInt(1,99);
     const b = randInt(1,99);
     const op = a===b ? '=' : (a>b ? '>' : '<');
@@ -162,7 +160,7 @@
     };
   }
 
-  function genPlaceValue(){ // десятки и единицы
+  function genPlaceValue(){
     const n = randInt(10,99);
     const tens = Math.floor(n/10);
     const ones = n % 10;
@@ -176,10 +174,8 @@
     };
   }
 
-  function genAddNoCarry(){ // сложение без перехода в пределах 20
+  function genAddNoCarry(){
     const a = randInt(1,9);
-    const b = randInt(1, 9 - a + 1); // ensure a+b<=9? but no transition: ensure a%10 + b < 10 -> using 1..9 both but ensure sum<=9? For within 20 'без перехода через десяток' means units sum <10.
-    // Simpler: choose a in 1..9, b in 1..(9 - (a%10))
     const bmax = 9 - (a % 10);
     const bb = clamp(randInt(1, Math.max(1,bmax)),1,bmax);
     return {
@@ -192,7 +188,7 @@
     };
   }
 
-  function genSubNoCarry(){ // вычитание без перехода
+  function genSubNoCarry(){
     const a = randInt(2,20);
     const b = randInt(1, Math.min(9, a-1));
     return {
@@ -205,13 +201,10 @@
     };
   }
 
-  function genAddCarry(){ // сложение с переходом через десяток (в пределах 100)
-    // choose a ∈ [10,90], b ∈ [1,20] ensuring ≤100
+  function genAddCarry(){
     const a = randInt(10,90);
     const b = randInt(1, Math.min(20, 100 - a));
-    // ensure that units sum >=10 to force carry? ask examples with carry so units sum >=10
     if(((a%10) + b) < 10){
-      // adjust b so carry occurs
       const need = 10 - (a%10);
       const b2 = clamp(randInt(need, Math.min(20,100 - a)), need, Math.min(20,100 - a));
       return {
@@ -233,8 +226,7 @@
     };
   }
 
-  function genCmDm(){ // см ↔ дм conversion
-    // ask: Сколько сантиметров в X дм? choose X 1..9
+  function genCmDm(){
     const dm = randInt(1,9);
     const correct = dm * 10;
     return {
@@ -247,7 +239,7 @@
     };
   }
 
-  function genWordProblem(){ // простая текстовая задача, 1 операция ≤20
+  function genWordProblem(){
     const a = randInt(5,20);
     const b = randInt(1, Math.min(10, a-1));
     return {
@@ -260,7 +252,7 @@
     };
   }
 
-  function genTableQuestion(){ // быстрые вычисления: random simple add/sub
+  function genTableQuestion(){
     if(Math.random() < 0.6){
       const a = randInt(1,20);
       const b = randInt(1,20);
@@ -286,11 +278,11 @@
     }
   }
 
-  function genSequenceQuestion(){ // next number +1 or +2
+  function genSequenceQuestion(){
     const step = Math.random() < 0.6 ? 1 : 2;
     const start = randInt(1, 30);
     const seq = [start, start + step, start + 2*step];
-    const missingIndex = 2; // ask next
+    const missingIndex = 2;
     const ans = seq[missingIndex];
     return {
       id: qIdCounter++,
@@ -302,7 +294,7 @@
     };
   }
 
-  function genGeometryPerimeter(){ // perimeter rectangle integer cm, w,h natural
+  function genGeometryPerimeter(){
     const w = randInt(2,12);
     const h = randInt(1,12);
     const per = 2*(w+h);
@@ -316,18 +308,14 @@
     };
   }
 
-  function genMoneyQuestion(){ // payment: price and payment given -> change
-    const price = randInt(1,20); // keep small for test
-    // choose paid >= price using banknotes set
+  function genMoneyQuestion(){
+    const price = randInt(1,20);
     const banknotes = [1,2,5,10,50,100];
-    // choose a paid sum that is >=price and natural
     let paid = price;
     if(Math.random() < 0.5){
-      // make some overpay by adding a random banknote
       const add = banknotes[randInt(0, banknotes.length-1)];
       paid = price + add;
     } else {
-      // exact sometimes
       paid = price;
     }
     const change = paid - price;
@@ -341,7 +329,6 @@
     };
   }
 
-  // master generator: pick from pool to ensure coverage
   function generateQuestions(n){
     qIdCounter = 1;
     const poolGenerators = [
@@ -359,16 +346,12 @@
       genMoneyQuestion
     ];
     const arr = [];
-    // ensure we include most types at least once if n >= pool length
     const poolLen = poolGenerators.length;
     const used = new Set();
-    // try to pick diverse set
     for(let i=0;i<n;i++){
-      // prefer types not yet used
       let gen;
       const remaining = poolGenerators.filter((g,idx)=> !used.has(idx));
       if(remaining.length > 0 && (n - i) <= remaining.length){
-        // force include remaining
         gen = remaining[0];
         const idx = poolGenerators.indexOf(gen);
         used.add(idx);
@@ -397,7 +380,6 @@
     prompt.innerHTML = `<div>${q.prompt}</div>`;
     body.appendChild(prompt);
 
-    // render input depending on type
     const answerDiv = document.createElement('div');
     answerDiv.className = 'answer';
     if(q.type === 'number' || q.type === 'text'){
@@ -408,22 +390,16 @@
       input.style.minWidth = '110px';
       input.value = (answers[q.id] !== undefined) ? answers[q.id] : '';
       input.addEventListener('input', ()=>{ answers[q.id] = input.value.trim(); updateProgressDisplay(); });
-      // keyboard: Enter moves next
       input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ goNext(); } });
       answerDiv.appendChild(input);
     } else if(q.type === 'choice'){
-      // radio choices
       q.options.forEach(opt=>{
         const btn = document.createElement('button');
         btn.className = 'small';
         btn.type = 'button';
         btn.style.margin = '4px';
         btn.textContent = opt;
-        btn.addEventListener('click', ()=>{ answers[q.id] = opt; // visually indicate selection
-          Array.from(answerDiv.querySelectorAll('button')).forEach(b=>b.style.outline=''); btn.style.outline='3px solid rgba(43,140,255,0.18)';
-          updateProgressDisplay();
-        });
-        // if previously selected, mark
+        btn.addEventListener('click', ()=>{ answers[q.id] = opt; Array.from(answerDiv.querySelectorAll('button')).forEach(b=>b.style.outline=''); btn.style.outline='3px solid rgba(43,140,255,0.18)'; updateProgressDisplay(); });
         if(answers[q.id] === opt){ setTimeout(()=>btn.style.outline='3px solid rgba(43,140,255,0.18)',50); }
         answerDiv.appendChild(btn);
       });
@@ -432,7 +408,6 @@
     body.appendChild(answerDiv);
     container.appendChild(title);
     container.appendChild(body);
-    // small footer
     const footer = document.createElement('div');
     footer.style.marginTop = '8px';
     footer.style.color = 'var(--muted)';
@@ -440,10 +415,8 @@
     container.appendChild(footer);
 
     testArea.appendChild(container);
-    // focus first input if available
     const el = document.querySelector('#ans_' + q.id);
     if(el) el.focus();
-    // update nav/pagination
     updateNav();
   }
 
@@ -454,27 +427,30 @@
   }
 
   function updateProgressDisplay(){
-    // count answered
     const answered = questions.reduce((acc,q)=> acc + (answers[q.id] !== undefined && answers[q.id] !== '' ? 1 : 0), 0);
     progressEl.textContent = `${answered}/${questions.length}`;
   }
 
-  // ======= Timer =======
+  // ======= Timer (CHANGED: display elapsed time, not remaining) =======
   function startTimer(){
     if(timerId) clearInterval(timerId);
     startedAt = Date.now();
     elapsedSec = 0;
+    // always run interval to measure elapsed time; if useTimer is checked then also enforce limit and auto-finish
     const enabled = useTimerEl.checked;
-    if(!enabled) { timerEl.textContent = '—'; return; }
     timeLimitSec = Math.max(1, parseInt(timeLimitEl.value||'10',10)) * 60;
+    // show initial 00:00
+    timerEl.textContent = '00:00';
     timerId = setInterval(()=>{
       elapsedSec = Math.floor((Date.now() - startedAt)/1000);
-      const rem = Math.max(0, timeLimitSec - elapsedSec);
-      timerEl.textContent = `${pad2(Math.floor(rem/60))}:${pad2(rem%60)}`;
-      if(rem <= 0){
+      // display elapsed time (затраченное)
+      timerEl.textContent = `${pad2(Math.floor(elapsedSec/60))}:${pad2(elapsedSec%60)}`;
+      // if limit enabled, auto-finish when elapsed >= limit
+      if(enabled && elapsedSec >= timeLimitSec){
+        // clamp display to exactly timeLimitSec (optional) — keep elapsed equal to limit to indicate used up time
+        timerEl.textContent = `${pad2(Math.floor(timeLimitSec/60))}:${pad2(timeLimitSec%60)}`;
         clearInterval(timerId);
         timerId = null;
-        // auto-finish
         finishTest();
       }
     }, 300);
@@ -496,7 +472,6 @@
       const userRaw = answers[q.id];
       let userVal = userRaw;
       if(q.type === 'number' || q.type === 'text'){
-        // coerce to integer for comparison; empty means NaN
         userVal = (userRaw === undefined || userRaw === '') ? NaN : parseInt(userRaw,10);
       } else if(q.type === 'choice'){
         userVal = userRaw || null;
@@ -512,9 +487,10 @@
     testArea.style.display = 'none';
     afterDiv.style.display = '';
     const percent = Math.round(correctCount / questions.length * 100);
+    // display elapsed time (затраченное)
+    const displayedTime = timerEl.textContent || `${pad2(Math.floor(elapsedSec/60))}:${pad2(elapsedSec%60)}`;
     scoreSummary.innerHTML = `<p>Правильных ответов: <strong>${correctCount}/${questions.length}</strong> — ${percent}%</p>
-      <p>Время: ${timerEl.textContent}</p>`;
-    // detailed list
+      <p>Затраченное время: ${displayedTime}</p>`;
     detailedAnswers.innerHTML = '';
     details.forEach((d, idx)=>{
       const card = document.createElement('div');
@@ -527,19 +503,17 @@
       detailedAnswers.appendChild(card);
     });
 
-    // save best score in localStorage
     const prevBest = parseInt(localStorage.getItem('final_best')||'0',10) || 0;
     if(percent > prevBest) localStorage.setItem('final_best', String(percent));
-    // prepare print page content URL
-    preparePrintPage(correctCount, percent, details);
+    preparePrintPage(correctCount, percent, details, displayedTime);
   }
 
   // ======= Print / export result =======
-  function preparePrintPage(correctCount, percent, details){
+  function preparePrintPage(correctCount, percent, details, displayedTime){
     const title = `Результат контрольной — ${correctCount}/${questions.length} (${percent}%)`;
     let html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
       <style>body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#071029} h1{font-size:18px} .q{margin-bottom:12px;padding:8px;border-bottom:1px solid #eee}</style></head><body>`;
-    html += `<h1>${title}</h1><p>Время: ${timerEl.textContent}</p>`;
+    html += `<h1>${title}</h1><p>Затраченное время: ${displayedTime}</p>`;
     details.forEach((d, idx)=>{
       html += `<div class="q"><div><strong>Вопрос ${idx+1} — ${d.topic}</strong></div><div>${d.prompt}</div><div>Ваш ответ: ${d.user === null || (String(d.user)==='NaN') ? 'нет ответа' : d.user}</div><div>Правильный: ${d.correct}</div><div>Пояснение: ${d.explanation}</div></div>`;
     });
@@ -549,11 +523,9 @@
     const url = URL.createObjectURL(blob);
     printOnlyLink.href = url;
     printOnlyLink.target = '_blank';
-    // open print window when pressing printBtn
     printBtn.onclick = ()=> {
       const w = window.open(url, '_blank');
       if(!w) { alert('Блокировщик всплывающих окон может помешать открыть страницу. Откройте результат вручную.'); return; }
-      // try to invoke print after load
       w.addEventListener('load', ()=>{ try{ w.print(); } catch(e){} });
     };
   }
@@ -577,7 +549,6 @@
   nextBtn.addEventListener('click', ()=>{ goNext(); });
   finishBtn.addEventListener('click', ()=>{ if(confirm('Вы действительно хотите завершить тест и увидеть результаты? Подсказки отключены.')) finishTest(); });
   resetBtn.addEventListener('click', ()=>{ if(confirm('Создать новый тест? Текущие ответы будут удалены.')) createTest(); });
-  // allow Ctrl+Enter to finish
   document.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ finishTest(); } });
 
   // init
