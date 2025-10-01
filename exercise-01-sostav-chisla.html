@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Состав числа — Тренажёр по математике (2 класс)</title>
+  <meta name="description" content="Интерактивный мобильный тренажёр по теме «Состав числа» для 2-го класса. Три уровня сложности, автоматическая проверка, подсказки и звёзды.">
+  <meta property="og:title" content="Состав числа — Тренажёр по математике (2 класс)">
+  <meta property="og:description" content="Интерактивный мобильный тренажёр по теме «Состав числа» для 2-го класса. Три уровня сложности, автоматическая проверка, подсказки и звёзды.">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LearningResource",
+    "name": "Состав числа — тренажёр по математике (2 класс)",
+    "educationalLevel": "Grade 2",
+    "learningResourceType": "InteractiveExercise",
+    "description": "Интерактивные задания по теме 'Состав числа' для 2-го класса. Три уровня сложности.",
+    "url": "https://example.github.io/exercise-01-sostav-chisla.html"
+  }
+  </script>
+
+  <style>
+    /* Mobile-first base styles */
+    :root{--bg:#f8fbff;--card:#ffffff;--accent:#2b8cff;--success:#2aa653;--error:#e03d3d;--muted:#6b7280;--touch:56px}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;margin:0;padding:14px;background:var(--bg);color:#0f172a}
+
+    header{max-width:920px;margin:0 auto 12px;display:flex;align-items:center;gap:12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    h1{font-size:1.25rem;margin:0}
+    .meta{color:var(--muted);font-size:0.92rem}
+
+    main{max-width:920px;margin:0 auto;background:var(--card);border-radius:12px;padding:12px;box-shadow:0 6px 20px rgba(15,23,42,0.06)}
+
+    .controls{display:flex;flex-direction:column;gap:8px}
+    .controls-row{display:flex;gap:8px;align-items:center;width:100%}
+    select,input,button{padding:10px 12px;border-radius:10px;border:1px solid #dbeafe;background:white;font-size:1rem}
+    .controls .right{margin-left:auto}
+
+    .game{display:flex;flex-direction:column;gap:12px}
+    .panel{padding:12px;border-radius:12px;background:linear-gradient(180deg,#fbfdff,#ffffff);border:1px solid #eef2ff}
+
+    .target{font-size:3.2rem;font-weight:800;text-align:center}
+    .fields{display:flex;gap:10px;justify-content:center;margin:12px 0}
+    .field{width:120px;height:56px;border-radius:10px;border:2px dashed #c7d2fe;display:flex;align-items:center;justify-content:center;font-size:1.6rem;background:white}
+
+    .digits{display:flex;flex-wrap:wrap;gap:6px;padding:8px;max-height:220px;overflow:auto}
+    .digit{width:44px;height:44px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #e6eefc;cursor:pointer;background:linear-gradient(180deg,#fff,#f7fbff)}
+
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .actions button{flex:1;padding:10px;border-radius:10px}
+
+    .feedback{min-height:42px;margin-top:8px;font-weight:700;text-align:center}
+    .feedback.success{color:var(--success)}
+    .feedback.error{color:var(--error)}
+
+    .pairs{font-size:0.95rem;color:var(--muted);margin-top:8px;text-align:center}
+    .starbar{display:flex;gap:6px;align-items:center}
+
+    .aside{display:flex;flex-direction:column;gap:10px}
+    .hint-list{color:var(--muted);font-size:0.95rem;padding-left:14px}
+
+    footer{max-width:920px;margin:12px auto 0;color:var(--muted);font-size:0.9rem}
+
+    @media(min-width:780px){
+      .controls{flex-direction:row;align-items:center}
+      .game{flex-direction:row;gap:18px}
+      .target{font-size:4rem}
+      .aside{width:320px}
+      .digits{max-height:300px}
+    }
+
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+<a href="index.html" class="home-btn">🏠 На главную</a>
+
+<style>
+  .home-btn {
+    display: inline-block;
+    margin: 10px;
+    padding: 12px 18px;
+    font-size: 18px;
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+  .home-btn:hover {
+    background-color: #45a049;
+  }
+</style>
+
+  <header>
+    <div class="logo" aria-hidden>М2</div>
+    <div>
+      <h1>Состав числа</h1>
+      <div class="meta">Тренажёр для 2‑го класса — тема: состав числа. Авторы учебника: Моро М.И. и др.</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls" role="region" aria-label="Управление">
+      <div class="controls-row">
+        <label for="level" class="sr-only">Уровень</label>
+        <select id="level" aria-label="Уровень упражнения">
+          <option value="1">1 — числа 2–10</option>
+          <option value="2" selected>2 — числа 11–20</option>
+          <option value="3">3 — найди все пары</option>
+        </select>
+
+        <label for="seriesCount" class="sr-only">Длина серии</label>
+        <input id="seriesCount" type="number" min="1" max="50" value="10" style="width:96px" aria-label="Количество примеров в серии">
+
+        <div class="right" aria-hidden>Лучший: <span id="bestStars">—</span></div>
+      </div>
+
+      <div class="controls-row">
+        <input id="studentName" placeholder="Имя ученика (локально)" aria-label="Имя ученика" style="flex:1">
+        <div class="right" style="font-size:0.95rem;color:var(--muted);">Прогресс: <span id="progress">0/10</span></div>
+      </div>
+    </div>
+
+    <section class="game" aria-labelledby="gameHeading">
+      <article class="panel">
+        <div id="gameHeading" class="sr-only">Игровое поле</div>
+        <p id="instr" class="sr-only">Нажми на цифры ниже, чтобы заполнить два поля так, чтобы их сумма равнялась большему числу. Нажми "Проверить".</p>
+
+        <div class="target" id="target" aria-live="polite">—</div>
+
+        <div class="fields" role="group" aria-label="Поля для слагаемых">
+          <div class="field" id="a" tabindex="0" aria-label="Первое слагаемое">—</div>
+          <div class="field" id="b" tabindex="0" aria-label="Второе слагаемое">—</div>
+        </div>
+
+        <div class="digits" id="digits" role="list"></div>
+
+        <div class="actions">
+          <button id="checkBtn">Проверить</button>
+          <button id="swapBtn">Поменять местами</button>
+          <button id="clearBtn">Очистить</button>
+          <button id="allBtn">Показать все пары</button>
+        </div>
+
+        <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+        <div id="pairsBox" class="pairs" hidden></div>
+      </article>
+
+      <aside class="aside" aria-label="Подсказки">
+        <div class="panel">
+          <h2 style="margin-top:0">Подсказки и пояснения</h2>
+          <ul>
+            <li>Уровень 2 показывает связь десятков и единиц (например, 14 = 10 + 4).</li>
+            <li>Уровень 3 — попросит найти все возможные пары (используйте кнопку «Показать все пары»).</li>
+            <li>Доступно введение с клавиатуры: выберите поле и введите число.</li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <strong>Результат:</strong>
+          <div id="resultSummary" style="margin-top:8px;color:var(--muted)">—</div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer>
+    Упражнение разработано на основе программы: Моро М.И., Бантова М.А., Бельтюкова Г.В. — «Математика. 2 класс». Текст учебника не копируется.
+  </footer>
+
+  <script>
+    (function(){
+      const levelEl = document.getElementById('level');
+      const targetEl = document.getElementById('target');
+      const digitsEl = document.getElementById('digits');
+      const aEl = document.getElementById('a');
+      const bEl = document.getElementById('b');
+      const checkBtn = document.getElementById('checkBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const swapBtn = document.getElementById('swapBtn');
+      const allBtn = document.getElementById('allBtn');
+      const feedback = document.getElementById('feedback');
+      const pairsBox = document.getElementById('pairsBox');
+      const studentName = document.getElementById('studentName');
+      const bestStars = document.getElementById('bestStars');
+      const resultSummary = document.getElementById('resultSummary');
+      const seriesCountEl = document.getElementById('seriesCount');
+      const progressEl = document.getElementById('progress');
+
+      let target = 14;
+      let selectedField = 'a';
+
+      // restore name and best result
+      studentName.value = localStorage.getItem('sostav_student') || '';
+      bestStars.textContent = localStorage.getItem('sostav_best') || '—';
+
+      let seriesTotal = Math.max(1, parseInt(seriesCountEl.value || '10',10));
+      let seriesCurrent = 0;
+      const advanceDelay = 450; // ms
+
+      function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+
+      function generateDigits(){
+        digitsEl.innerHTML = '';
+        for(let i=1;i<=20;i++){
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'digit';
+          btn.textContent = i;
+          btn.setAttribute('aria-label','Число '+i);
+          btn.addEventListener('click',()=>onDigitClick(i));
+          digitsEl.appendChild(btn);
+        }
+      }
+
+      function setTargetByLevel(){
+        const lvl = Number(levelEl.value);
+        if(lvl===1) target = randInt(2,10);
+        else if(lvl===2) target = randInt(11,20);
+        else target = randInt(2,20);
+        targetEl.textContent = target;
+        clearFields();
+        pairsBox.hidden = true;
+        feedback.textContent='';
+      }
+
+      function clearFields(){
+        aEl.textContent = '—'; bEl.textContent='—';
+        aEl.dataset.value=''; bEl.dataset.value='';
+      }
+
+      function onDigitClick(n){
+        const el = selectedField==='a'?aEl:bEl;
+        el.textContent = n;
+        el.dataset.value = String(n);
+      }
+
+      function computePairs(n){
+        const pairs=[];
+        for(let x=1;x<=n-1;x++) pairs.push([x,n-x]);
+        return pairs;
+      }
+
+      function showAllPairs(){
+        const pairs = computePairs(target);
+        pairsBox.hidden = false;
+        pairsBox.innerHTML = 'Все пары ('+pairs.length+'): ' + pairs.map(p=>p.join('+')).join(', ');
+      }
+
+      function updateProgress(){
+        seriesTotal = Math.max(1, parseInt(seriesCountEl.value || '10',10));
+        progressEl.textContent = seriesCurrent + '/' + seriesTotal;
+      }
+
+      function saveResult(success){
+        // best: max streak
+        const key = 'sostav_best';
+        let best = parseInt(localStorage.getItem(key)||'0',10);
+        let streak = parseInt(localStorage.getItem('sostav_streak')||'0',10);
+        if(success){
+          streak = streak+1;
+          if(streak>best) best = streak;
+        } else {
+          streak = 0;
+        }
+        localStorage.setItem('sostav_streak',String(streak));
+        localStorage.setItem(key,String(best));
+        localStorage.setItem('sostav_student',studentName.value || '');
+        bestStars.textContent = best>0?('★'.repeat(Math.min(best,3))):'—';
+        resultSummary.textContent = 'Последний ответ: '+(success?'правильно':'неправильно') + '. Серия: '+streak+'. Лучшее: '+best+'.';
+      }
+
+      function endSeries(){
+        feedback.className='feedback success';
+        feedback.textContent = 'Серия завершена! Правильных: '+seriesCurrent+' из '+seriesTotal+'. Отлично.';
+        // disable interaction
+        Array.from(document.querySelectorAll('.digit')).forEach(d=>d.disabled=true);
+        checkBtn.disabled=true;
+      }
+
+      function checkAnswer(){
+        const a = parseInt(aEl.dataset.value,10);
+        const b = parseInt(bEl.dataset.value,10);
+        if(Number.isNaN(a) || Number.isNaN(b)){
+          feedback.className='feedback error';
+          feedback.textContent = 'Заполните оба поля цифрами.';
+          return false;
+        }
+        if(a+b===target){
+          feedback.className='feedback success';
+          feedback.textContent = 'Верно! '+a+' + '+b+' = '+target+'.';
+          saveResult(true);
+          seriesCurrent += 1;
+          updateProgress();
+          if(seriesCurrent >= seriesTotal){
+            setTimeout(endSeries, advanceDelay);
+          } else {
+            setTimeout(()=>{ setTargetByLevel(); }, advanceDelay);
+          }
+          return true;
+        } else {
+          feedback.className='feedback error';
+          feedback.textContent = 'Неверно. '+a+' + '+b+' = '+(a+b)+'. Подумай ещё.';
+          saveResult(false);
+          return false;
+        }
+      }
+
+      // swap fields
+      swapBtn.addEventListener('click',()=>{
+        const ta = aEl.dataset.value || '';
+        const tb = bEl.dataset.value || '';
+        aEl.dataset.value = tb; aEl.textContent = tb || '—';
+        bEl.dataset.value = ta; bEl.textContent = ta || '—';
+      });
+
+      clearBtn.addEventListener('click', ()=>{ clearFields(); feedback.textContent=''; });
+      allBtn.addEventListener('click', showAllPairs);
+      checkBtn.addEventListener('click', checkAnswer);
+
+      // field focus / keyboard entry
+      aEl.addEventListener('click', ()=>{ selectedField='a'; aEl.style.borderColor='var(--accent)'; bEl.style.borderColor=''; aEl.focus(); });
+      bEl.addEventListener('click', ()=>{ selectedField='b'; bEl.style.borderColor='var(--accent)'; aEl.style.borderColor=''; bEl.focus(); });
+
+      aEl.addEventListener('keydown', function(e){
+        if((e.key >= '0' && e.key <= '9') || e.key==='Backspace'){
+          e.preventDefault();
+          if(e.key==='Backspace'){ aEl.textContent='—'; aEl.dataset.value=''; }
+          else { aEl.textContent = e.key; aEl.dataset.value = e.key; }
+        }
+      });
+      bEl.addEventListener('keydown', function(e){
+        if((e.key >= '0' && e.key <= '9') || e.key==='Backspace'){
+          e.preventDefault();
+          if(e.key==='Backspace'){ bEl.textContent='—'; bEl.dataset.value=''; }
+          else { bEl.textContent = e.key; bEl.dataset.value = e.key; }
+        }
+      });
+
+      levelEl.addEventListener('change', ()=>{ resetSeries(); });
+      seriesCountEl.addEventListener('change', ()=>{ resetSeries(); });
+
+      function resetSeries(){ seriesCurrent = 0; Array.from(document.querySelectorAll('.digit')).forEach(d=>d.disabled=false); checkBtn.disabled=false; updateProgress(); setTargetByLevel(); }
+
+      // init
+      generateDigits();
+      setTargetByLevel();
+      updateProgress();
+
+      // accessibility: announce new number
+      const obs = new MutationObserver(()=>{
+        targetEl.setAttribute('aria-label','Текущее число: '+target);
+      });
+      obs.observe(targetEl,{childList:true});
+
+    })();
+  </script>
+</body>
+</html>

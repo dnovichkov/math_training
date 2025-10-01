@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Переход через десяток — Тренажёр (до 100)</title>
+  <meta name="description" content="Упражнения на сложение и вычитание с переходом через десяток (в пределах 100). Визуализация десятков и единиц, пошаговые подсказки."/>
+  <style>
+    :root{
+      --bg:#f7fbff; --card:#fff; --accent:#2b8cff; --muted:#6b7280;
+      --success:#2aa653; --error:#e03d3d; --touch:56px;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0; padding:14px; background:var(--bg); color:#0f172a}
+    header{display:flex;gap:12px;align-items:center;max-width:980px;margin:0 auto 12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    h1{font-size:1.1rem;margin:0}
+    .meta{color:var(--muted);font-size:0.9rem}
+    main{max-width:980px;margin:0 auto;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.06)}
+    .controls{display:flex;flex-direction:column;gap:8px}
+    .controls-row{display:flex;gap:8px;align-items:center}
+    select,input,button{padding:10px;border-radius:10px;border:1px solid #dbeafe;background:white;font-size:1rem}
+    .right{margin-left:auto;color:var(--muted)}
+    .game{display:flex;flex-direction:column;gap:12px}
+    .panel{padding:12px;border-radius:12px;background:linear-gradient(180deg,#fbfdff,#fff);border:1px solid #eef2ff}
+    .task{font-size:1.6rem;font-weight:800;text-align:center}
+    /* numeric line (0..100) */
+    .numline-wrap{padding:12px}
+    .numline{position:relative;height:96px;background:linear-gradient(180deg,#f6f9ff,#fff);border-radius:10px;border:1px solid #e6eefc;padding:12px}
+    .ticks{display:flex;justify-content:space-between;align-items:flex-end;height:100%}
+    .tick{flex:1;text-align:center;font-weight:700;position:relative}
+    .tick:before{content:'';display:block;margin:0 auto 6px;width:2px;height:16px;background:#cbd5ff;border-radius:2px}
+    .tick span{display:block;margin-top:6px;font-size:0.85rem;color:#0f172a}
+    .ball{position:absolute;bottom:16px;left:0;width:40px;height:40px;border-radius:50%;background:linear-gradient(180deg,#ffd66b,#ffb84a);display:flex;align-items:center;justify-content:center;font-weight:800;color:#1b1b1b;transform:translateX(-50%);transition:left 300ms cubic-bezier(.2,.9,.2,1)}
+    /* tens/ones visualization */
+    .viz{display:flex;gap:14px;align-items:flex-start;justify-content:center;margin-top:10px;flex-wrap:wrap}
+    .bundle{display:flex;flex-direction:column;align-items:center;gap:8px}
+    .bundle .label{color:var(--muted);font-size:0.9rem}
+    .tens-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+    .ten{width:20px;height:48px;background:#ffd88a;border-radius:4px;box-shadow:0 1px 0 rgba(0,0,0,0.06)}
+    .ones-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+    .one{width:18px;height:18px;background:#9be7ff;border-radius:4px}
+    .controls-touch{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:8px}
+    .big-btn{padding:12px 18px;border-radius:12px;border:1px solid #dbeafe;background:white;font-size:1.03rem;min-width:86px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+    .feedback{min-height:56px;font-weight:700;text-align:center;margin-top:8px}
+    .feedback.success{color:var(--success)}
+    .feedback.error{color:var(--error)}
+    .hint{color:var(--muted);font-size:0.95rem;text-align:center}
+    .steps{margin-top:10px;background:#fbfdff;border:1px solid #eef6ff;padding:10px;border-radius:10px;color:#16325c}
+    .kbd-hint{font-size:0.85rem;color:var(--muted);margin-top:8px;text-align:center}
+    @media(min-width:880px){ .controls{flex-direction:row} .game{flex-direction:row;gap:18px} .panel{flex:1} }
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">М2</div>
+    <div>
+      <h1>Переход через десяток (до 100)</h1>
+      <div class="meta">Сложение и вычитание с переносом/заимствованием. Пошаговые подсказки.</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls" role="region" aria-label="Управление">
+      <div class="controls-row">
+        <label for="level" class="sr-only">Уровень</label>
+        <select id="level" aria-label="Уровень">
+          <option value="1">1 — простые случаи (напр. 27 + 5)</option>
+          <option value="2">2 — примеры до 100 с переносом</option>
+          <option value="3">3 — цепочка задач (случайные)</option>
+        </select>
+
+        <label for="seriesCount" class="sr-only">Длина серии</label>
+        <input id="seriesCount" type="number" min="1" max="50" value="10" style="width:96px" aria-label="Длина серии">
+
+        <div class="right">Лучший: <span id="best">—</span></div>
+      </div>
+
+      <div class="controls-row">
+        <input id="student" placeholder="Имя ученика (локально)" style="flex:1">
+        <div class="right">Прогресс: <span id="progress">0/10</span></div>
+      </div>
+    </div>
+
+    <section class="game" aria-labelledby="gameHeading">
+      <article class="panel">
+        <div class="task" id="taskText">—</div>
+
+        <div class="numline-wrap" aria-hidden="false">
+          <div class="numline" id="numline" aria-hidden="false">
+            <div class="ticks" id="ticks"></div>
+            <div class="ball" id="ball">0</div>
+          </div>
+        </div>
+
+        <div class="viz" aria-hidden="false">
+          <div class="bundle">
+            <div class="label">Десятки</div>
+            <div class="tens-row" id="tensRow" aria-live="polite"></div>
+            <div class="label" id="tensCo

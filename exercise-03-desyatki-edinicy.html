@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Десятки и единицы — Тренажёр (2 класс)</title>
+  <meta name="description" content="Упражнение по разрядам: десятки и единицы. Собирай числа из десятков и единиц, определяй разряды, преобразования разрядов.">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"LearningResource",
+    "name":"Десятки и единицы — тренажёр (2 класс)",
+    "educationalLevel":"Grade 2",
+    "learningResourceType":"InteractiveExercise",
+    "description":"Упражнение по разрядам: десятки и единицы. Собирай числа из десятков и единиц, определяй разряды, преобразования разрядов.",
+    "url":"https://example.github.io/exercise-03-desyatki-edinicy.html"
+  }
+  </script>
+
+  <style>
+    :root{--bg:#f8fbff;--card:#fff;--accent:#2b8cff;--muted:#6b7280;--success:#2aa653;--error:#e03d3d;--touch:56px}
+    *{box-sizing:border-box}
+    body{margin:0;padding:14px;font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background:var(--bg);color:#0f172a}
+    header{display:flex;gap:12px;align-items:center;max-width:920px;margin:0 auto 12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    h1{font-size:1.25rem;margin:0}
+    .meta{color:var(--muted);font-size:0.92rem}
+    main{max-width:920px;margin:0 auto;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.06)}
+
+    .controls{display:flex;flex-direction:column;gap:8px}
+    .controls-row{display:flex;gap:8px;align-items:center}
+    select,input,button{padding:10px;border-radius:10px;border:1px solid #dbeafe;background:white}
+    .right{margin-left:auto;color:var(--muted)}
+
+    .game{display:flex;flex-direction:column;gap:12px}
+    .panel{background:linear-gradient(180deg,#fbfdff,#fff);padding:12px;border-radius:12px;border:1px solid #eef2ff}
+
+    .vis{display:flex;align-items:center;gap:18px;justify-content:center;padding:8px}
+    .number-box{font-weight:800;font-size:2.4rem;min-width:86px;text-align:center}
+
+    /* visual tens and ones */
+    .tens{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:center}
+    .ten{width:18px;height:48px;background:#ffd88a;border-radius:4px;box-shadow:0 1px 0 rgba(0,0,0,0.06)}
+    .ten-bundle{display:inline-flex;gap:6px;align-items:center}
+    .ones{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+    .one{width:18px;height:18px;background:#9be7ff;border-radius:4px}
+
+    .controls-build{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+    .build-btn{padding:10px 12px;border-radius:10px;border:1px solid #dbeafe;background:white;min-width:120px}
+
+    .fields{display:flex;gap:10px;justify-content:center;margin-top:8px}
+    .field{min-width:86px;height:56px;border-radius:10px;border:2px dashed #c7d2fe;display:flex;align-items:center;justify-content:center;font-size:1.4rem}
+
+    .feedback{min-height:44px;font-weight:700;text-align:center;margin-top:8px}
+    .feedback.success{color:var(--success)}
+    .feedback.error{color:var(--error)}
+
+    .aside{display:flex;flex-direction:column;gap:10px}
+    .hint{color:var(--muted)}
+
+    footer{max-width:920px;margin:12px auto 0;color:var(--muted);font-size:0.9rem}
+
+    @media(min-width:780px){
+      .controls{flex-direction:row}
+      .game{flex-direction:row;gap:18px}
+      .aside{width:320px}
+    }
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+<a href="index.html" class="home-btn">🏠 На главную</a>
+
+<style>
+  .home-btn {
+    display: inline-block;
+    margin: 10px;
+    padding: 12px 18px;
+    font-size: 18px;
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+  .home-btn:hover {
+    background-color: #45a049;
+  }
+</style>
+
+  <header>
+    <div class="logo">М2</div>
+    <div>
+      <h1>Десятки и единицы</h1>
+      <div class="meta">Понимание разрядов: десятки и единицы (числа до 99)</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls" role="region" aria-label="Управление">
+      <div class="controls-row">
+        <select id="level" aria-label="Уровень">
+          <option value="1">1 — Собери по инструкции</option>
+          <option value="2">2 — Сколько десятков?</option>
+          <option value="3">3 — Преобразование разрядов</option>
+        </select>
+
+        <label for="seriesCount" class="sr-only">Длина серии</label>
+        <input id="seriesCount" type="number" min="1" max="50" value="10" style="width:96px" aria-label="Длина серии">
+
+        <div class="right">Лучший: <span id="best">—</span></div>
+      </div>
+
+      <div class="controls-row">
+        <input id="student" placeholder="Имя ученика (локально)" style="flex:1">
+        <div class="right">Прогресс: <span id="progress">0/10</span></div>
+      </div>
+    </div>
+
+    <section class="game" aria-labelledby="gameHeading">
+      <article class="panel">
+        <div class="vis" aria-hidden="false">
+          <div class="number-box" id="displayNumber">—</div>
+
+          <div>
+            <div style="text-align:center;color:var(--muted)">Визуализация</div>
+            <div style="margin-top:8px" id="visual">
+              <!-- tens and ones will be rendered here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Level-specific UI -->
+        <div id="level1" class="panel" hidden>
+          <div style="text-align:center;margin-bottom:8px">Собери число: показано X десятков и Y единиц</div>
+          <div class="fields">
+            <div class="field" id="buildTens">0 десятков</div>
+            <div class="field" id="buildOnes">0 единиц</div>
+          </div>
+          <div class="controls-build" style="margin-top:10px">
+            <button class="build-btn" id="addTen">+10 (добавить десяток)</button>
+            <button class="build-btn" id="removeTen">−10 (убрать десяток)</button>
+            <button class="build-btn" id="addOne">+1 (добавить единицу)</button>
+            <button class="build-btn" id="removeOne">−1 (убрать единицу)</button>
+          </div>
+        </div>
+
+        <div id="level2" class="panel" hidden>
+          <div style="text-align:center">Сколько десятков в числе?</div>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
+            <input id="tensAnswer" inputmode="numeric" pattern="[0-9]*" style="width:120px;padding:10px;border-radius:10px;border:1px solid #dbeafe;text-align:center" placeholder="десятков">
+          </div>
+        </div>
+
+        <div id="level3" class="panel" hidden>
+          <div style="text-align:center">Преобразуй: убери 1 десяток и прибавь 10 единиц. Запиши новое представление:</div>
+          <div class="fields" style="margin-top:8px">
+            <div class="field"><input id="newTens" inputmode="numeric" pattern="[0-9]*" placeholder="десятков" style="width:100%;border:none;text-align:center"></div>
+            <div class="field"><input id="newOnes" inputmode="numeric" pattern="[0-9]*" placeholder="единиц" style="width:100%;border:none;text-align:center"></div>
+          </div>
+        </div>
+
+        <div class="actions" style="margin-top:12px">
+          <button id="checkBtn">Проверить</button>
+          <button id="showBtn">Показать ответ</button>
+        </div>
+
+        <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+      </article>
+
+      <aside class="aside">
+        <div class="panel">
+          <h3 style="margin:0 0 8px 0">Подсказки</h3>
+          <div class="hint">10 единиц = 1 десяток. Число 56 = 5 десятков и 6 единиц.</div>
+        </div>
+
+        <div class="panel">
+          <strong>Результат:</strong>
+          <div id="resultSummary" style="margin-top:8px;color:var(--muted)">—</div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer>Упражнение основано на программе: Моро М.И., Бантова М.А., Бельтюкова Г.В. — «Математика. 2 класс».</footer>
+
+  <script>
+    (function(){
+      const levelEl = document.getElementById('level');
+      const displayNumber = document.getElementById('displayNumber');
+      const visual = document.getElementById('visual');
+      const level1 = document.getElementById('level1');
+      const level2 = document.getElementById('level2');
+      const level3 = document.getElementById('level3');
+      const addTen = document.getElementById('addTen');
+      const removeTen = document.getElementById('removeTen');
+      const addOne = document.getElementById('addOne');
+      const removeOne = document.getElementById('removeOne');
+      const buildTens = document.getElementById('buildTens');
+      const buildOnes = document.getElementById('buildOnes');
+      const tensAnswer = document.getElementById('tensAnswer');
+      const newTens = document.getElementById('newTens');
+      const newOnes = document.getElementById('newOnes');
+      const checkBtn = document.getElementById('checkBtn');
+      const showBtn = document.getElementById('showBtn');
+      const feedback = document.getElementById('feedback');
+      const resultSummary = document.getElementById('resultSummary');
+      const student = document.getElementById('student');
+      const best = document.getElementById('best');
+      const seriesCountEl = document.getElementById('seriesCount');
+      const progressEl = document.getElementById('progress');
+
+      let tens=0, ones=0; // current visual composition
+      let number=0;
+
+      // series/progress
+      let seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'10',10));
+      let seriesCurrent = 0;
+      const advanceDelay = 500;
+
+      // restore
+      student.value = localStorage.getItem('pv_student')||'';
+      best.textContent = localStorage.getItem('pv_best')||'—';
+
+      function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+      function genNumber(){
+        const lvl = Number(levelEl.value);
+        if(lvl===1){
+          // choose tens and ones and show them as instruction
+          tens = randInt(1,9);
+          ones = randInt(0,9);
+          number = tens*10 + ones;
+          // but for level1 we want to show instruction (tens and ones) and require child build same
+        } else if(lvl===2){
+          number = randInt(10,99);
+          tens = Math.floor(number/10); ones = number%10;
+        } else {
+          number = randInt(10,99);
+          tens = Math.floor(number/10); ones = number%10;
+        }
+        // reset builder
+        buildTens.textContent = '0 десятков'; buildOnes.textContent='0 единиц';
+        visualRender(0,0);
+        renderDisplay();
+        feedback.textContent='';
+        tensAnswer.value=''; newTens.value=''; newOnes.value='';
+        updateProgress();
+      }
+
+      function renderDisplay(){
+        displayNumber.textContent = (Number(levelEl.value)===1)? (tens + ' десятков и ' + ones + ' единиц') : number;
+        // show visual: tens bundles and ones
+        visual.innerHTML = '';
+        const tensWrap = document.createElement('div'); tensWrap.className='tens';
+        for(let i=0;i<tens;i++){ const t = document.createElement('div'); t.className='ten'; tensWrap.appendChild(t);} 
+        const onesWrap = document.createElement('div'); onesWrap.className='ones';
+        for(let i=0;i<ones;i++){ const o=document.createElement('div'); o.className='one'; onesWrap.appendChild(o);} 
+        visual.appendChild(tensWrap); visual.appendChild(onesWrap);
+      }
+
+      function visualRender(t,o){
+        // similar to render but with provided t,o
+        visual.innerHTML='';
+        const tensWrap = document.createElement('div'); tensWrap.className='tens';
+        for(let i=0;i<t;i++){ const tt=document.createElement('div'); tt.className='ten'; tensWrap.appendChild(tt);} 
+        const onesWrap = document.createElement('div'); onesWrap.className='ones';
+        for(let i=0;i<o;i++){ const oo=document.createElement('div'); oo.className='one'; onesWrap.appendChild(oo);} 
+        visual.appendChild(tensWrap); visual.appendChild(onesWrap);
+      }
+
+      // builder handlers
+      let builderT=0, builderO=0;
+      addTen.addEventListener('click', ()=>{ builderT++; buildTens.textContent = builderT + ' десятков'; visualRender(builderT,builderO); });
+      removeTen.addEventListener('click', ()=>{ if(builderT>0){ builderT--; buildTens.textContent = builderT + ' десятков'; visualRender(builderT,builderO);} });
+      addOne.addEventListener('click', ()=>{ if(builderO<19){ builderO++; buildOnes.textContent = builderO + ' единиц'; visualRender(builderT,builderO);} });
+      removeOne.addEventListener('click', ()=>{ if(builderO>0){ builderO--; buildOnes.textContent = builderO + ' единиц'; visualRender(builderT,builderO);} });
+
+      function checkAnswer(){
+        const lvl = Number(levelEl.value);
+        if(lvl===1){
+          // correct if builderT == tens and builderO == ones
+          if(builderT===tens && builderO===ones){ okFeedback(); } else { wrongFeedback('Попробуй ещё — собери столько же десятков и единиц.'); }
+        } else if(lvl===2){
+          const ans = parseInt(tensAnswer.value,10);
+          if(Number.isNaN(ans)){ wrongFeedback('Введите число десятков.'); return; }
+          if(ans===tens){ okFeedback(); } else { wrongFeedback('Неправильно. Подумай о десятках в числе '+number+'.'); }
+        } else {
+          // level3: newTens should be tens-1 and newOnes should be ones+10
+          const nt = parseInt(newTens.value,10);
+          const no = parseInt(newOnes.value,10);
+          if(Number.isNaN(nt) || Number.isNaN(no)){ wrongFeedback('Заполните оба поля.'); return; }
+          if(nt===tens-1 && no===ones+10){ okFeedback(); } else { wrongFeedback('Неправильно. Проверь разницу: убери 1 десяток и прибавь 10 единиц.'); }
+        }
+      }
+
+      function okFeedback(){
+        feedback.className='feedback success';
+        feedback.textContent='Правильно!';
+        saveResult(true);
+        seriesCurrent +=1; updateProgress();
+        if(seriesCurrent>=seriesTotal){ setTimeout(endSeries, advanceDelay); }
+        else setTimeout(()=>{ genNumber(); }, advanceDelay);
+      }
+      function wrongFeedback(msg){
+        feedback.className='feedback error';
+        feedback.textContent = msg;
+        saveResult(false);
+      }
+
+      function showAnswer(){
+        const lvl = Number(levelEl.value);
+        if(lvl===1){ alert('Ответ: '+tens+' десятков и '+ones+' единиц.'); }
+        else if(lvl===2){ alert('Число '+number+' состоит из '+Math.floor(number/10)+' десятков и '+(number%10)+' единиц.'); }
+        else { alert('Пример преобразования: '+number+' = '+(tens-1)+' десятков и '+(ones+10)+' единиц.'); }
+      }
+
+      function saveResult(ok){
+        let streak = parseInt(localStorage.getItem('pv_streak')||'0',10);
+        let bestv = parseInt(localStorage.getItem('pv_best')||'0',10)||0;
+        if(ok){ streak+=1; if(streak>bestv) bestv=streak; } else streak=0;
+        localStorage.setItem('pv_streak',String(streak));
+        localStorage.setItem('pv_best',String(bestv));
+        localStorage.setItem('pv_student', student.value || '');
+        best.textContent = bestv>0?('★'.repeat(Math.min(bestv,3))):'—';
+        resultSummary.textContent = 'Последний: '+(ok?'правильно':'неправильно')+'. Серия: '+streak+'. Лучшее: '+bestv+'.';
+      }
+
+      function endSeries(){
+        feedback.className='feedback success';
+        feedback.textContent = 'Серия завершена! Правильных: '+seriesCurrent+' из '+seriesTotal+'.';
+        // disable inputs
+        disableAll(true);
+      }
+
+      function disableAll(dis){
+        addTen.disabled=dis; removeTen.disabled=dis; addOne.disabled=dis; removeOne.disabled=dis; checkBtn.disabled=dis; showBtn.disabled=dis; tensAnswer.disabled=dis; newTens.disabled=dis; newOnes.disabled=dis; seriesCountEl.disabled=dis; levelEl.disabled=dis;
+      }
+
+      function updateProgress(){ seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'10',10)); progressEl.textContent = seriesCurrent + '/' + seriesTotal; }
+
+      function resetSeries(){ seriesCurrent=0; updateProgress(); disableAll(false); genNumber(); }
+
+      // events
+      checkBtn.addEventListener('click', checkAnswer);
+      showBtn.addEventListener('click', showAnswer);
+      levelEl.addEventListener('change', ()=>{ resetBuilder(); resetSeries(); showLevels(); });
+      seriesCountEl.addEventListener('change', ()=>{ resetSeries(); });
+
+      function resetBuilder(){ builderT=0; builderO=0; buildTens.textContent='0 десятков'; buildOnes.textContent='0 единиц'; }
+
+      function showLevels(){
+        level1.hidden = levelEl.value!=='1';
+        level2.hidden = levelEl.value!=='2';
+        level3.hidden = levelEl.value!=='3';
+      }
+
+      // init
+      resetBuilder(); showLevels(); resetSeries();
+
+    })();
+  </script>
+</body>
+</html>

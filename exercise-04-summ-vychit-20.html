@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Сложение и вычитание в пределах 20 — Тренажёр (2 класс)</title>
+  <meta name="description" content="Тренажёр: сложение и вычитание в пределах 20 без перехода через десяток. Числовая прямая, кнопки вперед/назад, серия заданий с таймером.">
+  <style>
+    :root{--bg:#f8fbff;--card:#fff;--accent:#2b8cff;--muted:#6b7280;--success:#2aa653;--error:#e03d3d}
+    *{box-sizing:border-box}
+    body{font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;margin:0;padding:14px;background:var(--bg);color:#0f172a}
+    header{display:flex;gap:12px;align-items:center;max-width:920px;margin:0 auto 12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    h1{font-size:1.25rem;margin:0}
+    .meta{color:var(--muted);font-size:0.92rem}
+    main{max-width:920px;margin:0 auto;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.06)}
+
+    .controls{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+    .controls-row{display:flex;gap:8px;align-items:center}
+    select,input,button{padding:10px;border-radius:10px;border:1px solid #dbeafe;background:white}
+    .right{margin-left:auto;color:var(--muted)}
+
+    .game{display:flex;flex-direction:column;gap:12px}
+    .panel{background:linear-gradient(180deg,#fbfdff,#fff);padding:12px;border-radius:12px;border:1px solid #eef2ff}
+
+    .task{font-weight:800;font-size:2rem;text-align:center}
+
+    /* number line */
+    .numline-wrap{padding:12px}
+    .numline{position:relative;height:84px;background:linear-gradient(180deg,#f6f9ff,#fff);border-radius:10px;border:1px solid #e6eefc;padding:12px}
+    .ticks{display:flex;justify-content:space-between;align-items:flex-end;height:100%}
+    .tick{flex:1;text-align:center;font-weight:700;position:relative}
+    .tick:before{content:'';display:block;margin:0 auto 6px;width:2px;height:18px;background:#cbd5ff;border-radius:2px}
+    .tick span{display:block;margin-top:6px;font-size:0.85rem;color:#0f172a}
+    .ball{position:absolute;bottom:16px;left:0;width:36px;height:36px;border-radius:50%;background:linear-gradient(180deg,#ffd66b,#ffb84a);display:flex;align-items:center;justify-content:center;font-weight:700;transform:translateX(-50%);transition:left 260ms cubic-bezier(.2,.9,.2,1)}
+
+    .controls-touch{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:8px}
+    .big-btn{padding:12px 18px;border-radius:12px;border:1px solid #dbeafe;background:white;font-size:1.1rem;min-width:80px}
+
+    .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+    .actions button{padding:10px;border-radius:10px}
+
+    .feedback{min-height:44px;font-weight:700;text-align:center;margin-top:8px}
+    .feedback.success{color:var(--success)}
+    .feedback.error{color:var(--error)}
+
+    .timer{font-size:0.95rem;color:var(--muted);text-align:center}
+
+    .kbd-hint{font-size:0.85rem;color:var(--muted);margin-top:8px;text-align:center}
+
+    @media(min-width:780px){
+      .controls{flex-direction:row}
+      .game{flex-direction:row;gap:18px}
+      .panel{flex:1}
+    }
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+<a href="index.html" class="home-btn">🏠 На главную</a>
+
+<style>
+  .home-btn {
+    display: inline-block;
+    margin: 10px;
+    padding: 12px 18px;
+    font-size: 18px;
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+  .home-btn:hover {
+    background-color: #45a049;
+  }
+</style>
+
+  <header>
+    <div class="logo">М2</div>
+    <div>
+      <h1>Сложение и вычитание в пределах 20</h1>
+      <div class="meta">Быстрые вычисления без перехода через десяток</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls" role="region" aria-label="Управление">
+      <div class="controls-row">
+        <label for="level" class="sr-only">Уровень</label>
+        <select id="level" aria-label="Уровень">
+          <option value="1">1 — Сложение без перехода</option>
+          <option value="2">2 — Вычитание без перехода</option>
+          <option value="3">3 — Серия с таймером</option>
+        </select>
+
+        <label for="seriesCount" class="sr-only">Длина серии</label>
+        <input id="seriesCount" type="number" min="1" max="50" value="10" style="width:96px" aria-label="Длина серии">
+
+        <div class="right">Лучший: <span id="best">—</span></div>
+      </div>
+
+      <div class="controls-row">
+        <input id="student" placeholder="Имя ученика (локально)" style="flex:1">
+        <div class="right">Прогресс: <span id="progress">0/10</span></div>
+      </div>
+    </div>
+
+    <section class="game" aria-labelledby="gameHeading">
+      <article class="panel">
+        <div class="task" id="taskText">—</div>
+
+        <div class="numline-wrap">
+          <div class="numline" id="numline" aria-hidden="false">
+            <div class="ticks" id="ticks"></div>
+            <div class="ball" id="ball">0</div>
+          </div>
+        </div>
+
+        <div class="controls-touch" aria-hidden="false">
+          <button class="big-btn" id="backBtn">◀︎ Назад</button>
+          <div style="min-width:12px"></div>
+          <button class="big-btn" id="forwardBtn">Вперёд ▶︎</button>
+        </div>
+
+        <div class="kbd-hint">Клавиши: ← → — перемещение, ввод цифр — перейти к числу, Enter — проверить</div>
+
+        <div class="actions">
+          <button id="checkBtn">Проверить</button>
+          <button id="showBtn">Показать ответ</button>
+          <button id="nextBtn">Пропустить</button>
+        </div>
+
+        <div class="timer" id="timer">Время: <span id="time">0</span> с</div>
+        <div id="feedback" class="feedback" role="status" aria-live="polite">&nbsp;</div>
+      </article>
+
+      <aside class="panel" style="width:320px">
+        <h3 style="margin-top:0">Подсказки</h3>
+        <ul style="color:var(--muted)">
+          <li>Перемещайте шарик кнопками «Вперёд/Назад» или стрелками клавиатуры.</li>
+          <li>Ввод цифр позволяет перейти к нужной отметке (ввод нескольких цифр для чисел >9).</li>
+          <li>Задачи генерируются так, чтобы не было перехода через десяток (уровни 1–2).</li>
+          <li>Уровень 3 — серия задач с таймером.</li>
+        </ul>
+
+        <div style="margin-top:12px">Результат: <div id="resultSummary" style="margin-top:8px;color:var(--muted)">—</div></div>
+      </aside>
+    </section>
+  </main>
+
+  <footer style="max-width:920px;margin:12px auto 0;color:var(--muted)">Основано на учебной программе: Моро М.И. и др.</footer>
+
+  <script>
+    (function(){
+      const levelEl = document.getElementById('level');
+      const taskText = document.getElementById('taskText');
+      const ticksEl = document.getElementById('ticks');
+      const numline = document.getElementById('numline');
+      const ball = document.getElementById('ball');
+      const backBtn = document.getElementById('backBtn');
+      const forwardBtn = document.getElementById('forwardBtn');
+      const checkBtn = document.getElementById('checkBtn');
+      const showBtn = document.getElementById('showBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const feedback = document.getElementById('feedback');
+      const student = document.getElementById('student');
+      const best = document.getElementById('best');
+      const seriesCountEl = document.getElementById('seriesCount');
+      const progressEl = document.getElementById('progress');
+      const timerEl = document.getElementById('time');
+      const resultSummary = document.getElementById('resultSummary');
+
+      // state
+      let a=0,b=0; // task a + b or a - b
+      let op = '+'; // '+' or '-'
+      let answer = 0;
+
+      const minVal = 0; const maxVal = 20;
+      let ballPos = 0;
+
+      // series
+      let seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'10',10));
+      let seriesCurrent = 0;
+      let startTime = null; let elapsed = 0; let timerId = null;
+      const advanceDelay = 520;
+
+      // numeric input buffer for keyboard (to allow typing multi-digit numbers)
+      let numBuffer = '';
+      let numBufferTimer = null;
+      const numBufferTimeout = 900; // ms to wait before auto-committing
+
+      // restore
+      student.value = localStorage.getItem('ns_student')||'';
+      const storedBest = parseInt(localStorage.getItem('ns_best')||'0',10) || 0;
+      best.textContent = storedBest>0?('★'.repeat(Math.min(storedBest,3))):'—';
+
+      function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+      function buildTicks(){
+        ticksEl.innerHTML='';
+        for(let i=minVal;i<=maxVal;i++){
+          const d = document.createElement('div'); d.className='tick';
+          const label = document.createElement('span'); label.textContent = i; d.appendChild(label);
+          ticksEl.appendChild(d);
+        }
+      }
+
+      function placeBall(pos){
+        ballPos = Math.max(minVal, Math.min(maxVal, pos));
+        const ticks = ticksEl.querySelectorAll('.tick');
+        if(ticks.length >= 2){
+          const containerRect = numline.getBoundingClientRect();
+          const firstRect = ticks[0].getBoundingClientRect();
+          const lastRect = ticks[ticks.length-1].getBoundingClientRect();
+          const firstCenter = (firstRect.left + firstRect.right) / 2 - containerRect.left;
+          const lastCenter = (lastRect.left + lastRect.right) / 2 - containerRect.left;
+          const pct = (ballPos - minVal) / (maxVal - minVal);
+          const x = firstCenter + pct * (lastCenter - firstCenter);
+          ball.style.left = x + 'px';
+        }
+        ball.textContent = ballPos;
+      }
+
+      function commitNumBuffer(){
+        if(numBuffer.length===0) return;
+        let v = parseInt(numBuffer,10);
+        if(Number.isNaN(v)) { numBuffer=''; return; }
+        v = Math.max(minVal, Math.min(maxVal, v));
+        placeBall(v);
+        numBuffer='';
+      }
+
+      function genTask(){
+        const lvl = Number(levelEl.value);
+        if(lvl===1){
+          // addition without crossing decade
+          let u1 = randInt(0,9); let u2 = randInt(0,9);
+          while(u1 + u2 >= 10){ u1 = randInt(0,9); u2 = randInt(0,9);} 
+          a = u1; b = u2; op = '+'; answer = a + b;
+        } else if(lvl===2){
+          // subtraction without crossing
+          let unitA = randInt(0,9); let unitB = randInt(0,unitA);
+          let tens = randInt(0,1);
+          a = tens*10 + unitA; b = unitB; op = '-'; answer = a - b;
+        } else {
+          // level 3: alternate simple add/sub
+          const typ = randInt(1,2);
+          if(typ===1){ let u1 = randInt(0,9); let u2 = randInt(0,9); while(u1+u2>=10){u1=randInt(0,9);u2=randInt(0,9);} a=u1;b=u2;op='+';answer=a+b;} 
+          else { let unitA=randInt(0,9); let unitB=randInt(0,unitA); let tens=randInt(0,1); a=tens*10+unitA; b=unitB; op='-'; answer=a-b; }
+        }
+        taskText.textContent = (op==='+')? (a+' + '+b) : (a+' − '+b);
+        placeBall(0); // start from zero now
+        feedback.textContent = '';
+        updateProgress();
+        resetTimerIfSeries();
+      }
+
+      function checkAnswer(){
+        if(ballPos === answer){
+          feedback.className='feedback success'; feedback.textContent = 'Верно! '+(op==='+'? (a+'+'+b+'='+answer) : (a+'−'+b+'='+answer));
+          saveResult(true);
+          seriesCurrent += 1; updateProgress();
+          if(seriesCurrent >= seriesTotal){ setTimeout(endSeries, advanceDelay); stopTimer(); }
+          else setTimeout(()=>{ genTask(); }, advanceDelay);
+        } else {
+          const crossed = (op==='+' && ((a%10)+(b%10) >=10)) || (op==='-' && ((a%10) < (b%10)));
+          if(crossed){ feedback.className='feedback error'; feedback.textContent='Здесь был переход через десяток — обсудите десятки и единицы.'; }
+          else { feedback.className='feedback error'; feedback.textContent='Неверно, попробуй ещё.'; }
+          saveResult(false);
+        }
+      }
+
+      function showAnswer(){ placeBall(answer); feedback.className=''; feedback.textContent = 'Показан ответ: '+answer; }
+      function skipTask(){ genTask(); }
+
+      function saveResult(ok){
+        let streak = parseInt(localStorage.getItem('ns_streak')||'0',10);
+        let bestv = parseInt(localStorage.getItem('ns_best')||'0',10) || 0;
+        if(ok){ streak +=1; if(streak>bestv) bestv=streak; } else streak=0;
+        localStorage.setItem('ns_streak',String(streak));
+        localStorage.setItem('ns_best',String(bestv));
+        localStorage.setItem('ns_student', student.value || '');
+        best.textContent = bestv>0?('★'.repeat(Math.min(bestv,3))):'—';
+        resultSummary.textContent = 'Последний: '+(ok?'правильно':'неправильно')+'. Серия: '+streak+'. Лучшее: '+bestv+'.';
+      }
+
+      function endSeries(){ feedback.className='feedback success'; feedback.textContent='Серия окончена! Правильных: '+seriesCurrent+'/'+seriesTotal; disableAll(true); }
+      function disableAll(d){ backBtn.disabled=d; forwardBtn.disabled=d; checkBtn.disabled=d; showBtn.disabled=d; nextBtn.disabled=d; seriesCountEl.disabled=d; levelEl.disabled=d; }
+
+      // Timer for level 3
+      function startTimer(){ if(timerId) return; startTime = Date.now(); timerId = setInterval(()=>{ elapsed = Math.floor((Date.now()-startTime)/1000); timerEl.textContent = String(elapsed); },1000); }
+      function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+      function resetTimerIfSeries(){ if(Number(levelEl.value)===3){ stopTimer(); timerEl.textContent='0'; startTimer(); } else { stopTimer(); timerEl.textContent='0'; } }
+
+      function updateProgress(){ seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'10',10)); progressEl.textContent = seriesCurrent + '/' + seriesTotal; }
+      function resetSeries(){ seriesCurrent=0; updateProgress(); disableAll(false); genTask(); }
+
+      // events
+      backBtn.addEventListener('click', ()=>{ placeBall(ballPos-1); });
+      forwardBtn.addEventListener('click', ()=>{ placeBall(ballPos+1); });
+      checkBtn.addEventListener('click', checkAnswer);
+      showBtn.addEventListener('click', showAnswer);
+      nextBtn.addEventListener('click', skipTask);
+      levelEl.addEventListener('change', ()=>{ resetSeries(); });
+      seriesCountEl.addEventListener('change', ()=>{ resetSeries(); });
+
+      // keyboard: arrows + numeric input + Enter
+      document.addEventListener('keydown',(e)=>{
+        if(e.key === 'ArrowRight') { e.preventDefault(); placeBall(ballPos+1); clearNumBuffer(); }
+        else if(e.key === 'ArrowLeft') { e.preventDefault(); placeBall(ballPos-1); clearNumBuffer(); }
+        else if(e.key === 'Enter') { e.preventDefault(); commitNumBuffer(); checkAnswer(); }
+        else if(/^[0-9]$/.test(e.key)){
+          // build a short numeric buffer (so user can type 1 then 2 for '12')
+          numBuffer += e.key;
+          // cap to two digits
+          if(numBuffer.length>2) numBuffer = numBuffer.slice(-2);
+          // update ball as user types
+          const v = parseInt(numBuffer,10);
+          if(!Number.isNaN(v)) placeBall(Math.max(minVal, Math.min(maxVal, v)));
+          // reset timer
+          if(numBufferTimer) clearTimeout(numBufferTimer);
+          numBufferTimer = setTimeout(()=>{ commitNumBuffer(); numBufferTimer = null; }, numBufferTimeout);
+        }
+      });
+
+      function clearNumBuffer(){ if(numBufferTimer){ clearTimeout(numBufferTimer); numBufferTimer=null; } numBuffer=''; }
+
+      // init
+      buildTicks();
+      resetSeries();
+      window.addEventListener('resize', ()=>{ placeBall(ballPos); });
+
+    })();
+  </script>
+</body>
+</html>
