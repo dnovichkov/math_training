@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Деньги — простые покупки (рубли)</title>
+<meta name="description" content="Упражнение: выбрать товар, оплатить купюрами и правильно дать сдачу. Всё в целых рублях.">
+<style>
+  :root{
+    --bg:#f7fbff; --card:#fff; --accent:#2b8cff; --muted:#556; --ok:#2aa653; --err:#e03d3d;
+    --note-bg:#fffbe8; --note-border:#ffd96b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:14px;font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background:var(--bg);color:#071029}
+  .home-btn{display:inline-block;margin:8px 0;padding:10px 14px;font-size:15px;background-color:#4CAF50;color:white;border-radius:8px;text-decoration:none}
+  header{display:flex;gap:12px;align-items:center;max-width:980px;margin:6px auto 12px}
+  .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+  h1{font-size:1.05rem;margin:0}
+  .meta{color:var(--muted);font-size:0.92rem}
+  main{max-width:980px;margin:0 auto;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,0.06)}
+  .controls{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  label{font-size:0.95rem}
+  select,input,button{padding:10px;border-radius:10px;border:1px solid #e6eefc;background:white}
+  .shop{display:flex;flex-direction:column;gap:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid #eef6ff}
+  .product{display:flex;gap:12px;align-items:center;justify-content:space-between}
+  .product .info{flex:1}
+  .product h2{margin:0;font-size:1.05rem}
+  .price{font-weight:900;font-size:1.2rem;color:var(--accent)}
+  .notes{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .note{min-width:84px;padding:10px;border-radius:10px;background:var(--note-bg);border:2px solid var(--note-border);text-align:center;font-weight:800;cursor:pointer;user-select:none;box-shadow:0 4px 12px rgba(11,22,60,0.04)}
+  .note:active{transform:translateY(2px)}
+  .note.small{min-width:56px;padding:8px}
+  .cashdesk{margin-top:12px;padding:10px;border-radius:10px;background:#fff;border:1px dashed #dbeafe;min-height:86px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+  .paylist{display:flex;gap:8px;flex-wrap:wrap}
+  .payitem{padding:6px 8px;border-radius:8px;background:#fffbe8;border:1px solid #ffd96b;font-weight:700}
+  .sum{margin-left:auto;font-weight:900;font-size:1.15rem}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+  .hint{color:var(--muted);font-size:0.92rem;margin-top:6px;text-align:center}
+  .feedback{min-height:48px;margin-top:8px;font-weight:800;text-align:center}
+  .feedback.ok{color:var(--ok)}
+  .feedback.err{color:var(--err)}
+  .small{font-size:0.95rem;padding:8px 10px}
+  .stat{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media(min-width:880px){ .shop{flex-direction:row;align-items:center} .product{flex:1} .cashdesk{min-width:320px} }
+  /* drag visual */
+  .note.dragging{opacity:0.5;transform:scale(0.98)}
+</style>
+</head>
+<body>
+  <a href="index.html" class="home-btn">🏠 На главную</a>
+
+  <header>
+    <div class="logo">M2</div>
+    <div>
+      <h1>Деньги — простые покупки</h1>
+      <div class="meta">Выберите товар, оплатите купюрами (целые рубли) и правильно дайте сдачу.</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls" role="region" aria-label="Управление">
+      <div class="row">
+        <label for="level">Уровень:</label>
+        <select id="level" aria-label="Уровень">
+          <option value="1">1 — цена ≤ 20 (простая оплата, часто точная)</option>
+          <option value="2">2 — цена ≤ 100 (сдача возможна)</option>
+        </select>
+
+        <label for="seriesCount" style="margin-left:6px">Серия:</label>
+        <input id="seriesCount" type="number" min="1" max="30" value="10" style="width:96px">
+
+        <!-- NEW: exact-pay mode -->
+        <label style="margin-left:6px"><input id="exactOnly" type="checkbox"> Только точная оплата</label>
+
+        <div style="margin-left:auto;color:var(--muted)">Лучший: <span id="best">—</span></div>
+      </div>
+      <div class="row">
+        <input id="student" placeholder="Имя ученика (локально)" style="flex:1">
+        <div style="margin-left:auto;color:var(--muted)">Прогресс: <span id="progress">0/10</span></div>
+      </div>
+    </div>
+
+    <section class="shop" aria-label="Магазин">
+      <div class="product" id="productBlock">
+        <div class="info">
+          <h2 id="productName">—</h2>
+          <div class="price" id="productPrice">— руб.</div>
+          <div class="hint">Подберите купюры и нажмите <strong>Оплатить</strong>. Нажмите цифры 1—6, чтобы добавить купюру с клавиатуры. Backspace — убрать последнюю.</div>
+        </div>
+
+        <div class="cashdesk" id="cashdesk" aria-label="Касса (перетащите купюры сюда)">
+          <div><strong>Внесено:</strong></div>
+          <div class="paylist" id="paylist" aria-live="polite"></div>
+          <div style="display:flex;align-items:center;width:100%;">
+            <div class="sum" id="sumDisplay">0 руб.</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div><strong>Купюры</strong></div>
+        <div class="notes" id="notes" aria-hidden="false">
+          <!-- notes created by JS: 1,2,5,10,50,100 -->
+        </div>
+
+        <div class="actions">
+          <button id="btnAdd" class="small">Оплатить</button>
+          <button id="btnUndo" class="small">Удалить последнюю</button>
+          <button id="btnClear" class="small">Очистить оплату</button>
+          <button id="btnShow" class="small">Показать сдачу</button>
+          <button id="btnSkip" class="small">Пропустить</button>
+        </div>
+
+        <div class="stat">
+          <div id="resultMsg" class="feedback" aria-live="polite">&nbsp;</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+(function(){
+  // DOM
+  const levelEl = document.getElementById('level');
+  const seriesCountEl = document.getElementById('seriesCount');
+  const studentEl = document.getElementById('student');
+  const bestEl = document.getElementById('best');
+  const progressEl = document.getElementById('progress');
+  const exactOnlyEl = document.getElementById('exactOnly'); // NEW
+
+  const productName = document.getElementById('productName');
+  const productPrice = document.getElementById('productPrice');
+  const notesEl = document.getElementById('notes');
+  const paylistEl = document.getElementById('paylist');
+  const sumDisplay = document.getElementById('sumDisplay');
+
+  const btnAdd = document.getElementById('btnAdd');
+  const btnUndo = document.getElementById('btnUndo');
+  const btnClear = document.getElementById('btnClear');
+  const btnShow = document.getElementById('btnShow');
+  const btnSkip = document.getElementById('btnSkip');
+  const resultMsg = document.getElementById('resultMsg');
+
+  // State
+  const banknotes = [1,2,5,10,50,100]; // natural rubles
+  let paymentStack = []; // array of values added (order matters for undo)
+  let currentProduct = null; // {name, price}
+  let seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'10',10));
+  let seriesCurrent = 0;
+  let streak = parseInt(localStorage.getItem('money_streak')||'0',10) || 0;
+  let best = parseInt(localStorage.getItem('money_best')||'0',10) || 0;
+  bestEl.textContent = best>0? (best + '★') : '—';
+
+  // Helpers
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  function updateSum(){ const s = paymentStack.reduce((a,b)=>a+b,0); sumDisplay.textContent = s + ' руб.'; return s; }
+  function updateProgress(){ seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'10',10)); progressEl.textContent = `${seriesCurrent}/${seriesTotal}`; }
+
+  // UI creation
+  function createNotes(){
+    notesEl.innerHTML = '';
+    banknotes.forEach((v, idx) => {
+      const b = document.createElement('div');
+      b.className = 'note' + (v<=5 ? ' small' : '');
+      b.tabIndex = 0;
+      b.role = 'button';
+      b.ariaLabel = v + ' рублей';
+      b.textContent = v + ' ₽';
+      b.dataset.value = v;
+      // click / keyboard
+      b.addEventListener('click', ()=> addNoteByElement(b));
+      b.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' ') addNoteByElement(b); });
+      // drag handlers
+      b.draggable = true;
+      b.addEventListener('dragstart', (e)=>{ b.classList.add('dragging'); e.dataTransfer.setData('text/plain', String(v)); });
+      b.addEventListener('dragend', ()=>{ b.classList.remove('dragging'); });
+      notesEl.appendChild(b);
+    });
+  }
+
+  // Cashdesk drop handlers
+  const cashdesk = document.getElementById('cashdesk');
+  cashdesk.addEventListener('dragover', (e)=>{ e.preventDefault(); cashdesk.style.background = '#f8fff8'; });
+  cashdesk.addEventListener('dragleave', ()=>{ cashdesk.style.background = ''; });
+  cashdesk.addEventListener('drop', (e)=>{
+    e.preventDefault();
+    cashdesk.style.background = '';
+    const data = e.dataTransfer.getData('text/plain');
+    const v = parseInt(data,10);
+    if(!Number.isNaN(v)) addPayment(v);
+  });
+
+  // Add note via click/keyboard element
+  function addNoteByElement(el){
+    const v = parseInt(el.dataset.value,10);
+    addPayment(v);
+    // small visual feedback
+    el.animate([{transform:'translateY(-6px)'},{transform:'translateY(0)'}], {duration:180, easing:'ease-out'});
+  }
+
+  function addPayment(v){
+    // only natural numbers; v from banknotes so OK
+    paymentStack.push(v);
+    renderPaylist();
+    updateSum();
+    resultMsg.textContent = '';
+  }
+
+  function renderPaylist(){
+    paylistEl.innerHTML = '';
+    paymentStack.forEach((v, idx)=>{
+      const p = document.createElement('div');
+      p.className = 'payitem';
+      p.textContent = v + ' ₽';
+      p.title = 'Купюра ' + v + ' руб. (порядок: слева-справа)';
+      paylistEl.appendChild(p);
+    });
+  }
+
+  function undoLast(){
+    if(paymentStack.length === 0) return;
+    paymentStack.pop();
+    renderPaylist();
+    updateSum();
+  }
+  function clearPayment(){
+    paymentStack = [];
+    renderPaylist();
+    updateSum();
+    resultMsg.textContent = '';
+  }
+
+  // Products generator (natural prices only)
+  const sampleProducts = [
+    'Яблоко', 'Молоко (пачка)', 'Хлеб', 'Шоколадка', 'Бутылка сока', 'Носок', 'Тетрадь', 'Ручка', 'Мяч', 'Бутерброд'
+  ];
+
+  function genProduct(){
+    const level = levelEl.value;
+    let price = 1;
+    if(level === '1'){
+      price = randInt(1,20);
+    } else {
+      price = randInt(1,100);
+    }
+    const name = sampleProducts[randInt(0, sampleProducts.length-1)];
+    return {name, price};
+  }
+
+  // Check payment with exact-only mode handling (NEW: exactOnlyEl)
+  function checkPayment(){
+    if(!currentProduct) return;
+    const price = currentProduct.price;
+    const paid = updateSum();
+    const exactOnly = exactOnlyEl.checked;
+
+    if(paid < price){
+      resultMsg.className = 'feedback err';
+      resultMsg.textContent = `Недостаточно: нужно ${price} руб., вы внесли ${paid} руб.`;
+      saveStreak(false);
+      return false;
+    }
+
+    if(exactOnly){
+      // only accept exact payment
+      if(paid !== price){
+        // if overpaid, indicate that exact payment required
+        resultMsg.className = 'feedback err';
+        resultMsg.textContent = `Требуется точная оплата: стоимость ${price} руб., вы внесли ${paid} руб. Снимите лишние купюры.`;
+        saveStreak(false);
+        return false;
+      } else {
+        // exact
+        resultCorrect('Верно — оплата точная!');
+        return true;
+      }
+    }
+
+    // default behaviour: accept >= price and show change
+    const change = paid - price;
+    if(levelEl.value === '1'){
+      if(change === 0){
+        resultCorrect('Верно — оплата точная!');
+      } else {
+        resultCorrect(`Оплачено. Сдача ${change} руб.`);
+      }
+    } else {
+      resultCorrect(`Оплачено. Сдача: ${change} руб.`);
+    }
+    return true;
+  }
+
+  function resultCorrect(msg){
+    resultMsg.className = 'feedback ok';
+    resultMsg.textContent = msg;
+    saveStreak(true);
+    // advance to next product after short delay
+    seriesCurrent += 1;
+    updateProgress();
+    setTimeout(()=>{ nextProduct(); }, 900);
+  }
+
+  function showChange(){
+    if(!currentProduct) return;
+    const paid = updateSum();
+    const price = currentProduct.price;
+    const exactOnly = exactOnlyEl.checked;
+    if(paid < price){
+      resultMsg.className = 'feedback err';
+      resultMsg.textContent = `Ещё нужно ${price - paid} руб.`;
+    } else {
+      if(exactOnly && paid !== price){
+        resultMsg.className = 'feedback err';
+        resultMsg.textContent = `Режим: только точная оплата. Уберите лишние ${paid - price} руб.`;
+      } else {
+        resultMsg.className = 'feedback';
+        resultMsg.textContent = `Сдача будет: ${paid - price} руб.`;
+      }
+    }
+  }
+
+  function skipProduct(){
+    saveStreak(false);
+    seriesCurrent += 1;
+    updateProgress();
+    nextProduct();
+  }
+
+  // Next product / reset payment
+  function nextProduct(){
+    paymentStack = [];
+    renderPaylist(); updateSum();
+    resultMsg.textContent = '';
+    if(seriesCurrent >= seriesTotal){
+      resultMsg.className = 'feedback';
+      resultMsg.textContent = `Серия завершена — ${seriesCurrent}/${seriesTotal}.`;
+      seriesCurrent = 0;
+      updateProgress();
+    }
+    currentProduct = genProduct();
+    productName.textContent = currentProduct.name;
+    productPrice.textContent = currentProduct.price + ' руб.';
+    productPrice.setAttribute('tabindex','0');
+    productPrice.focus();
+  }
+
+  // Keyboard support: keys 1..6 add respective note, Enter pay, Backspace undo
+  document.addEventListener('keydown', (e)=>{
+    if(e.target.tagName === 'INPUT' && (e.key === 'Backspace' || e.key === 'Enter')) {
+      // allow default on inputs
+    }
+    if(e.key >= '1' && e.key <= '6'){
+      const idx = parseInt(e.key,10) - 1;
+      if(banknotes[idx] !== undefined) addPayment(banknotes[idx]);
+    } else if(e.key === 'Enter'){
+      checkPayment();
+    } else if(e.key === 'Backspace'){
+      undoLast();
+    }
+  });
+
+  // Buttons
+  btnAdd.addEventListener('click', ()=> checkPayment());
+  btnUndo.addEventListener('click', ()=> undoLast());
+  btnClear.addEventListener('click', ()=> clearPayment());
+  btnShow.addEventListener('click', ()=> showChange());
+  btnSkip.addEventListener('click', ()=> skipProduct());
+
+  // init
+  function init(){
+    createNotes();
+    seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'10',10));
+    seriesCurrent = 0;
+    updateProgress();
+    currentProduct = genProduct();
+    productName.textContent = currentProduct.name;
+    productPrice.textContent = currentProduct.price + ' руб.';
+    renderPaylist();
+    updateSum();
+  }
+
+  // storage of streak and best
+  function saveStreak(ok){
+    let cur = parseInt(localStorage.getItem('money_streak')||'0',10) || 0;
+    let bestNow = parseInt(localStorage.getItem('money_best')||'0',10) || 0;
+    if(ok){ cur += 1; if(cur > bestNow){ bestNow = cur; localStorage.setItem('money_best', String(bestNow)); } }
+    else cur = 0;
+    localStorage.setItem('money_streak', String(cur));
+    localStorage.setItem('money_best', String(bestNow));
+    bestEl.textContent = bestNow>0? (bestNow + '★') : '—';
+  }
+
+  // update when settings change
+  levelEl.addEventListener('change', ()=>{ currentProduct = genProduct(); productName.textContent = currentProduct.name; productPrice.textContent = currentProduct.price + ' руб.'; });
+  seriesCountEl.addEventListener('change', ()=>{ updateProgress(); });
+  exactOnlyEl.addEventListener('change', ()=>{
+    // small UX hint: clear messages when toggling
+    resultMsg.textContent = '';
+  });
+
+  // start
+  init();
+
+})();
+</script>
+</body>
+</html>
