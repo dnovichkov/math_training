@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Таблица сложения и вычитания — Тренажёр</title>
-  <meta name="description" content="Тренажёр: таблица примеров (3×3/5×5/10×10). Режимы: на время / без времени. Баллы = точность + скорость → медали.">
+  <meta name="description" content="Тренажёр: таблица примеров (3×3/5×5/10×10). Режим «на время» и без времени. Баллы = точность + скорость → медали.">
   <style>
     :root{
       --bg:#f6fbff; --card:#fff; --accent:#2b8cff; --muted:#6b7280;
@@ -20,8 +20,10 @@
     h1{font-size:1.05rem;margin:0}
     .meta{color:var(--muted);font-size:0.9rem}
     main{max-width:1100px;margin:0 auto;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,0.06)}
-    .top-controls{display:flex;flex-direction:column;gap:8px;padding:8px}
-    .row{display:flex;gap:8px;align-items:center}
+    /* Controls layout: three rows for mobile-first */
+    .controls { display:flex; flex-direction:column; gap:8px; padding:8px; }
+    .controls .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    label { font-size:0.95rem; color:#0f172a; }
     select,input[type="number"],button{padding:10px;border-radius:10px;border:1px solid var(--btn-border);background:var(--btn-bg);font-size:0.98rem}
     .spacer{flex:1}
     .grid-wrap{padding:10px}
@@ -35,9 +37,12 @@
     .stat{padding:8px;border-radius:8px;background:#fbfdff;border:1px solid #eef6ff}
     .feedback{margin-top:12px;font-weight:700;text-align:center;min-height:36px}
     .feedback.ok{color:var(--ok)} .feedback.bad{color:var(--bad)}
-    .legend{margin-top:12px;color:var(--muted);font-size:0.92rem}
+    .legend{margin-top:6px;color:var(--muted);font-size:0.92rem}
     input.revealed{background:#fff7e6}
-    @media(min-width:880px){ .top-controls{flex-direction:row;align-items:center} .grid{ } }
+    @media(min-width:880px){
+      .controls{flex-direction:row;align-items:center}
+      .controls .col { display:flex; gap:8px; align-items:center; }
+    }
   </style>
 </head>
 <body>
@@ -52,8 +57,10 @@
   </header>
 
   <main>
-    <div class="top-controls">
-      <div class="row">
+    <!-- Controls (three logical rows) -->
+    <div class="controls" role="region" aria-label="Управление">
+      <!-- Row 1: Уровень и Размер -->
+      <div class="row" id="row-1">
         <label for="level">Уровень:</label>
         <select id="level" aria-label="Уровень">
           <option value="1">1 — сложение до 10 (без перехода)</option>
@@ -69,27 +76,29 @@
           <option value="10">10 × 10</option>
         </select>
 
+        <div class="spacer" aria-hidden="true"></div>
+      </div>
+
+      <!-- Row 2: Режим на время и лимит -->
+      <div class="row" id="row-2">
         <label><input type="checkbox" id="timed"> Режим «на время»</label>
 
         <label for="timeLimit" style="margin-left:6px">Лимит (с):</label>
         <input id="timeLimit" type="number" min="10" max="3600" value="120" style="width:96px">
 
-        <div class="spacer"></div>
+        <div class="spacer" aria-hidden="true"></div>
+      </div>
 
+      <!-- Row 3: Кнопки управления -->
+      <div class="row" id="row-3">
         <button id="startBtn" class="small">Начать</button>
         <button id="checkBtn" class="small">Проверить всё</button>
         <button id="resetBtn" class="small">Сброс</button>
-      </div>
-
-      <div class="row">
-        <div class="toolbar" style="width:100%;justify-content:flex-start;">
-          <!-- Режим убран (автоматически выбирается по уровню) -->
-          <label>Показ/скрыть ответы: <button id="revealBtn" class="small">Показать</button></label>
-          <div style="margin-left:8px" class="legend">Клавиши: Enter — перейти/проверить, стрелки — навигация</div>
-        </div>
+        <div class="spacer" aria-hidden="true"></div>
       </div>
     </div>
 
+    <!-- Status + grid -->
     <div class="grid-wrap">
       <div id="metaStatus" class="status" aria-live="polite">
         <div class="stat">Время: <span id="time">0</span> с</div>
@@ -101,8 +110,16 @@
 
       <div id="board" style="margin-top:12px"></div>
 
-      <div id="afterArea" style="margin-top:12px">
-        <div id="finalMsg" class="feedback" aria-live="polite"></div>
+      <!-- Bottom area: reveal button + legend + final message -->
+      <div style="margin-top:14px; display:flex; flex-direction:column; gap:8px; align-items:stretch;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button id="revealBtn" class="small">Показать</button>
+          <div class="legend">Клавиши: Enter — перейти/проверить, стрелки — навигация. Кнопка «Показать» автозаполняет пустые/неправильные ячейки (при скрытии ваши ответы будут восстановлены).</div>
+        </div>
+
+        <div id="afterArea">
+          <div id="finalMsg" class="feedback" aria-live="polite"></div>
+        </div>
       </div>
     </div>
   </main>
