@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Итоговый тест — Микроконтроль (2 класс)</title>
+<meta name="description" content="Короткая контрольная (10–15 вопросов) по темам: числа, операции, разряды, см/дм, задачи, геометрия и деньги.">
+<style>
+  :root{
+    --bg:#f6fbff; --card:#fff; --accent:#2b8cff; --muted:#6b7280; --ok:#2aa653; --err:#e03d3d;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;padding:12px;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#071029}
+  a.home-btn{display:inline-block;margin:8px 0;padding:10px 14px;font-size:15px;background:#4CAF50;color:white;border-radius:8px;text-decoration:none}
+  header{display:flex;gap:12px;align-items:center;max-width:1100px;margin:6px auto 12px}
+  .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+  h1{font-size:1.05rem;margin:0}
+  .meta{color:var(--muted);font-size:0.9rem}
+  main{max-width:1100px;margin:0 auto;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,0.06)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+  label{font-size:0.95rem}
+  select,input[type="number"],button{padding:8px;border-radius:8px;border:1px solid #dbeafe;background:white}
+  .panel{padding:10px;border-radius:10px;background:#fff}
+  .qcard{margin:10px 0;padding:12px;border-radius:10px;border:1px solid #eef6ff;background:#fbfdff}
+  .qtitle{font-weight:800;margin-bottom:8px}
+  .qbody{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .answer{margin-top:8px}
+  .nav{display:flex;gap:8px;justify-content:center;margin-top:12px}
+  .status{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .stat{padding:8px;border-radius:8px;background:#fbfdff;border:1px solid #eef6ff}
+  .result{margin-top:12px;padding:12px;border-radius:10px;background:#fff}
+  .explain{margin-top:8px;padding:10px;border-radius:8px;background:#fffbe8;border:1px solid #ffd96b}
+  .print-link{display:inline-block;margin-top:8px;padding:8px 12px;background:#111827;color:white;border-radius:8px;text-decoration:none}
+  .small{font-size:0.92rem;padding:8px 10px}
+  @media(min-width:880px){ .qbody{align-items:flex-start} .controls{flex-wrap:nowrap} }
+</style>
+</head>
+<body>
+  <a href="index.html" class="home-btn">🏠 На главную</a>
+
+  <header>
+    <div class="logo">M2</div>
+    <div>
+      <h1>Итоговый тест — микроконтроль</h1>
+      <div class="meta">Короткая контрольная по всем пройденным темам. Подсказки отключены — объяснения появятся после завершения.</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="panel">
+      <div class="controls" role="region" aria-label="Настройки теста">
+        <label>Вопросов:
+          <select id="numQuestions">
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12" selected>12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+          </select>
+        </label>
+
+        <label><input type="checkbox" id="useTimer"> Включить таймер</label>
+        <label>Лимит (мин): <input id="timeLimit" type="number" min="1" max="60" value="10" style="width:76px"></label>
+
+        <div style="margin-left:auto" class="status">
+          <div class="stat">Прогресс: <span id="progress">0/0</span></div>
+          <div class="stat">Время: <span id="timer">00:00</span></div>
+        </div>
+      </div>
+
+      <div id="testArea" aria-live="polite">
+        <!-- вопрос будет вставлен сюда -->
+      </div>
+
+      <div class="nav" id="navButtons">
+        <button id="prevBtn" class="small">◀ Назад</button>
+        <button id="nextBtn" class="small">Вперёд ▶</button>
+        <button id="finishBtn" class="small">Завершить и проверить</button>
+        <button id="resetBtn" class="small">Пересоздать тест</button>
+      </div>
+
+      <div id="after" style="display:none" class="result" aria-live="polite">
+        <h2 id="scoreTitle">Результаты</h2>
+        <div id="scoreSummary"></div>
+        <div id="detailedAnswers"></div>
+        <div style="margin-top:12px">
+          <button id="printBtn" class="small">Печать результата</button>
+          <a id="printOnlyLink" class="print-link" href="#" target="_blank" rel="noopener">Открыть страницу для печати</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<script>
+(function(){
+  // ======= helpers =======
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  function clamp(n,a,b){ return Math.max(a,Math.min(b,n)); }
+  function pad2(n){ return (n<10? '0'+n: String(n)); }
+
+  // ======= DOM =======
+  const numQuestionsEl = document.getElementById('numQuestions');
+  const useTimerEl = document.getElementById('useTimer');
+  const timeLimitEl = document.getElementById('timeLimit');
+  const progressEl = document.getElementById('progress');
+  const timerEl = document.getElementById('timer');
+  const testArea = document.getElementById('testArea');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const finishBtn = document.getElementById('finishBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const afterDiv = document.getElementById('after');
+  const scoreSummary = document.getElementById('scoreSummary');
+  const detailedAnswers = document.getElementById('detailedAnswers');
+  const printBtn = document.getElementById('printBtn');
+  const printOnlyLink = document.getElementById('printOnlyLink');
+
+  // ======= state =======
+  let questions = []; // array of {id,type, prompt, options(optional), answer, explanation}
+  let answers = {};   // id -> user answer (varies by type)
+  let currentIndex = 0;
+  let qCount = 12;
+  let timerId = null;
+  let startedAt = null;
+  let elapsedSec = 0;
+  let timeLimitSec = 0;
+  let finished = false;
+
+  // ======= Question generators (all natural numbers only) =======
+  // We'll create a variety of question types, each returns {id, type, prompt, answer, explanation, renderAnswer(...) optional}
+  let qIdCounter = 1;
+
+  function genSostavChisla(){ // "Состав числа": give A and ask B so A+B=N? We'll ask to provide one addend.
+    // choose N 2..20, pick a visible part a, ask "Составьте число N: какое число надо добавить к a?"
+    const N = randInt(2,20);
+    const a = randInt(1, N-1);
+    const correct = N - a;
+    return {
+      id: qIdCounter++,
+      type: 'number',
+      topic: 'Состав числа',
+      prompt: `Состав числа: у нас есть ${a} и ещё сколько нужно, чтобы получилось ${N}?`,
+      answer: correct,
+      explanation: `${a} + ${correct} = ${N}.`
+    };
+  }
+
+  function genComparison(){ // "Больше-меньше": compare two numbers
+    const a = randInt(1,99);
+    const b = randInt(1,99);
+    const op = a===b ? '=' : (a>b ? '>' : '<');
+    return {
+      id: qIdCounter++,
+      type: 'choice',
+      topic: 'Сравнение',
+      prompt: `Что стоит между числами ${a} и ${b}? Выберите знак.`,
+      options: ['<','>','='],
+      answer: op,
+      explanation: `Потому что ${a} ${op} ${b}.`
+    };
+  }
+
+  function genPlaceValue(){ // десятки и единицы
+    const n = randInt(10,99);
+    const tens = Math.floor(n/10);
+    const ones = n % 10;
+    return {
+      id: qIdCounter++,
+      type: 'text',
+      topic: 'Десятки и единицы',
+      prompt: `Число ${n}. Сколько в нём десятков? (введите целое число)`,
+      answer: tens,
+      explanation: `${n} = ${tens} десятков и ${ones} единиц.`
+    };
+  }
+
+  function genAddNoCarry(){ // сложение без перехода в пределах 20
+    const a = randInt(1,9);
+    const b = randInt(1, 9 - a + 1); // ensure a+b<=9? but no transition: ensure a%10 + b < 10 -> using 1..9 both but ensure sum<=9? For within 20 'без перехода через десяток' means units sum <10.
+    // Simpler: choose a in 1..9, b in 1..(9 - (a%10))
+    const bmax = 9 - (a % 10);
+    const bb = clamp(randInt(1, Math.max(1,bmax)),1,bmax);
+    return {
+      id: qIdCounter++,
+      type: 'number',
+      topic: 'Сложение без перехода',
+      prompt: `Вычислите: ${a} + ${bb} = ?`,
+      answer: a+bb,
+      explanation: `${a} + ${bb} = ${a+bb}.`
+    };
+  }
+
+  function genSubNoCarry(){ // вычитание без перехода
+    const a = randInt(2,20);
+    const b = randInt(1, Math.min(9, a-1));
+    return {
+      id: qIdCounter++,
+      type: 'number',
+      topic: 'Вычитание без перехода',
+      prompt: `Вычислите: ${a} − ${b} = ?`,
+      answer: a - b,
+      explanation: `${a} − ${b} = ${a - b}.`
+    };
+  }
+
+  function genAddCarry(){ // сложение с переходом через десяток (в пределах 100)
+    // choose a ∈ [10,90], b ∈ [1,20] ensuring ≤100
+    const a = randInt(10,90);
+    const b = randInt(1, Math.min(20, 100 - a));
+    // ensure that units sum >=10 to force carry? ask examples with carry so units sum >=10
+    if(((a%10) + b) < 10){
+      // adjust b so carry occurs
+      const need = 10 - (a%10);
+      const b2 = clamp(randInt(need, Math.min(20,100 - a)), need, Math.min(20,100 - a));
+      return {
+        id: qIdCounter++,
+        type: 'number',
+        topic: 'Сложение с переходом',
+        prompt: `Вычислите: ${a} + ${b2} = ?`,
+        answer: a + b2,
+        explanation: `${a} + ${b2} = ${a + b2}.`
+      };
+    }
+    return {
+      id: qIdCounter++,
+      type: 'number',
+      topic: 'Сложение с переходом',
+      prompt: `Вычислите: ${a} + ${b} = ?`,
+      answer: a + b,
+      explanation: `${a} + ${b} = ${a + b}.`
+    };
+  }
+
+  function genCmDm(){ // см ↔ дм conversion
+    // ask: Сколько сантиметров в X дм? choose X 1..9
+    const dm = randInt(1,9);
+    const correct = dm * 10;
+    return {
+      id: qIdCounter++,
+      type: 'number',
+      topic: 'Сантиметры и дециметры',
+      prompt: `Сколько сантиметров в ${dm} дм?`,
+      answer: correct,
+      explanation: `1 дм = 10 см, поэтому ${dm} дм = ${dm} × 10 = ${correct} см.`
+    };
+  }
+
+  function genWordProblem(){ // простая текстовая задача, 1 операция ≤20
+    const a = randInt(5,20);
+    const b = randInt(1, Math.min(10, a-1));
+    return {
+      id: qIdCounter++,
+      type: 'number',
+      topic: 'Словесная задача',
+      prompt: `У Маши было ${a} печений. Она отдала ${b}. Сколько осталось печений?`,
+      answer: a - b,
+      explanation: `${a} − ${b} = ${a - b}.`
+    };
+  }
+
+  function genTableQuestion(){ // быстрые вычисления: random simple add/sub
+    if(Math.random() < 0.6){
+      const a = randInt(1,20);
+      const b = randInt(1,20);
+      return {
+        id: qIdCounter++,
+        type: 'number',
+        topic: 'Таблица (быстро)',
+        prompt: `Вычислите: ${a} + ${b} = ?`,
+        answer: a + b,
+        explanation: `${a} + ${b} = ${a + b}.`
+      };
+    } else {
+      const a = randInt(2,20);
+      const b = randInt(1,a-1);
+      return {
+        id: qIdCounter++,
+        type: 'number',
+        topic: 'Таблица (быстро)',
+        prompt: `Вычислите: ${a} − ${b} = ?`,
+        answer: a - b,
+        explanation: `${a} − ${b} = ${a - b}.`
+      };
+    }
+  }
+
+  function genSequenceQuestion(){ // next number +1 or +2
+    const step = Math.random() < 0.6 ? 1 : 2;
+    const start = randInt(1, 30);
+    const seq = [start, start + step, start + 2*step];
+    const missingIndex = 2; // ask next
+    const ans = seq[missingIndex];
+    return {
+      id: qIdCounter++,
+      type: 'number',
+      topic: 'Последовательности',
+      prompt: `Какое число идёт дальше в последовательности: ${seq[0]}, ${seq[1]}, ... ?`,
+      answer: ans,
+      explanation: `Шаг последовательности ${step}, поэтому следующее число ${ans}.`
+    };
+  }
+
+  function genGeometryPerimeter(){ // perimeter rectangle integer cm, w,h natural
+    const w = randInt(2,12);
+    const h = randInt(1,12);
+    const per = 2*(w+h);
+    return {
+      id: qIdCounter++,
+      type: 'number',
+      topic: 'Геометрия (периметр)',
+      prompt: `Прямоугольник со сторонами ${w} см и ${h} см. Найдите периметр (в см).`,
+      answer: per,
+      explanation: `Периметр = 2×( ${w} + ${h} ) = ${per} см.`
+    };
+  }
+
+  function genMoneyQuestion(){ // payment: price and payment given -> change
+    const price = randInt(1,20); // keep small for test
+    // choose paid >= price using banknotes set
+    const banknotes = [1,2,5,10,50,100];
+    // choose a paid sum that is >=price and natural
+    let paid = price;
+    if(Math.random() < 0.5){
+      // make some overpay by adding a random banknote
+      const add = banknotes[randInt(0, banknotes.length-1)];
+      paid = price + add;
+    } else {
+      // exact sometimes
+      paid = price;
+    }
+    const change = paid - price;
+    return {
+      id: qIdCounter++,
+      type: 'number',
+      topic: 'Деньги (сдача)',
+      prompt: `Цена ${price} руб. Покупатель заплатил ${paid} руб. Сколько сдачи нужно дать (в рублях)?`,
+      answer: change,
+      explanation: `Сдача = ${paid} − ${price} = ${change} руб.`
+    };
+  }
+
+  // master generator: pick from pool to ensure coverage
+  function generateQuestions(n){
+    qIdCounter = 1;
+    const poolGenerators = [
+      genSostavChisla,
+      genComparison,
+      genPlaceValue,
+      genAddNoCarry,
+      genSubNoCarry,
+      genAddCarry,
+      genCmDm,
+      genWordProblem,
+      genTableQuestion,
+      genSequenceQuestion,
+      genGeometryPerimeter,
+      genMoneyQuestion
+    ];
+    const arr = [];
+    // ensure we include most types at least once if n >= pool length
+    const poolLen = poolGenerators.length;
+    const used = new Set();
+    // try to pick diverse set
+    for(let i=0;i<n;i++){
+      // prefer types not yet used
+      let gen;
+      const remaining = poolGenerators.filter((g,idx)=> !used.has(idx));
+      if(remaining.length > 0 && (n - i) <= remaining.length){
+        // force include remaining
+        gen = remaining[0];
+        const idx = poolGenerators.indexOf(gen);
+        used.add(idx);
+      } else {
+        gen = poolGenerators[randInt(0, poolLen-1)];
+        const idx = poolGenerators.indexOf(gen);
+        used.add(idx);
+      }
+      arr.push(gen());
+    }
+    return arr;
+  }
+
+  // ======= Rendering questions =======
+  function renderQuestion(index){
+    const q = questions[index];
+    testArea.innerHTML = '';
+    const container = document.createElement('div');
+    container.className = 'qcard';
+    const title = document.createElement('div');
+    title.className = 'qtitle';
+    title.textContent = `Вопрос ${index+1} — тема: ${q.topic}`;
+    const body = document.createElement('div');
+    body.className = 'qbody';
+    const prompt = document.createElement('div');
+    prompt.innerHTML = `<div>${q.prompt}</div>`;
+    body.appendChild(prompt);
+
+    // render input depending on type
+    const answerDiv = document.createElement('div');
+    answerDiv.className = 'answer';
+    if(q.type === 'number' || q.type === 'text'){
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.inputMode = 'numeric';
+      input.id = 'ans_' + q.id;
+      input.style.minWidth = '110px';
+      input.value = (answers[q.id] !== undefined) ? answers[q.id] : '';
+      input.addEventListener('input', ()=>{ answers[q.id] = input.value.trim(); updateProgressDisplay(); });
+      // keyboard: Enter moves next
+      input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ goNext(); } });
+      answerDiv.appendChild(input);
+    } else if(q.type === 'choice'){
+      // radio choices
+      q.options.forEach(opt=>{
+        const btn = document.createElement('button');
+        btn.className = 'small';
+        btn.type = 'button';
+        btn.style.margin = '4px';
+        btn.textContent = opt;
+        btn.addEventListener('click', ()=>{ answers[q.id] = opt; // visually indicate selection
+          Array.from(answerDiv.querySelectorAll('button')).forEach(b=>b.style.outline=''); btn.style.outline='3px solid rgba(43,140,255,0.18)';
+          updateProgressDisplay();
+        });
+        // if previously selected, mark
+        if(answers[q.id] === opt){ setTimeout(()=>btn.style.outline='3px solid rgba(43,140,255,0.18)',50); }
+        answerDiv.appendChild(btn);
+      });
+    }
+
+    body.appendChild(answerDiv);
+    container.appendChild(title);
+    container.appendChild(body);
+    // small footer
+    const footer = document.createElement('div');
+    footer.style.marginTop = '8px';
+    footer.style.color = 'var(--muted)';
+    footer.textContent = `Вопрос ID: ${q.id}`;
+    container.appendChild(footer);
+
+    testArea.appendChild(container);
+    // focus first input if available
+    const el = document.querySelector('#ans_' + q.id);
+    if(el) el.focus();
+    // update nav/pagination
+    updateNav();
+  }
+
+  function updateNav(){
+    progressEl.textContent = `${currentIndex+1}/${questions.length}`;
+    prevBtn.disabled = currentIndex === 0;
+    nextBtn.disabled = currentIndex >= questions.length - 1;
+  }
+
+  function updateProgressDisplay(){
+    // count answered
+    const answered = questions.reduce((acc,q)=> acc + (answers[q.id] !== undefined && answers[q.id] !== '' ? 1 : 0), 0);
+    progressEl.textContent = `${answered}/${questions.length}`;
+  }
+
+  // ======= Timer =======
+  function startTimer(){
+    if(timerId) clearInterval(timerId);
+    startedAt = Date.now();
+    elapsedSec = 0;
+    const enabled = useTimerEl.checked;
+    if(!enabled) { timerEl.textContent = '—'; return; }
+    timeLimitSec = Math.max(1, parseInt(timeLimitEl.value||'10',10)) * 60;
+    timerId = setInterval(()=>{
+      elapsedSec = Math.floor((Date.now() - startedAt)/1000);
+      const rem = Math.max(0, timeLimitSec - elapsedSec);
+      timerEl.textContent = `${pad2(Math.floor(rem/60))}:${pad2(rem%60)}`;
+      if(rem <= 0){
+        clearInterval(timerId);
+        timerId = null;
+        // auto-finish
+        finishTest();
+      }
+    }, 300);
+  }
+
+  // ======= Navigation helpers =======
+  function goPrev(){ if(currentIndex>0){ currentIndex--; renderQuestion(currentIndex); } }
+  function goNext(){ if(currentIndex < questions.length -1){ currentIndex++; renderQuestion(currentIndex); } }
+
+  // ======= Finish and checking =======
+  function finishTest(){
+    if(finished) return;
+    finished = true;
+    if(timerId){ clearInterval(timerId); timerId=null; }
+    // compute score
+    let correctCount = 0;
+    const details = [];
+    for(const q of questions){
+      const userRaw = answers[q.id];
+      let userVal = userRaw;
+      if(q.type === 'number' || q.type === 'text'){
+        // coerce to integer for comparison; empty means NaN
+        userVal = (userRaw === undefined || userRaw === '') ? NaN : parseInt(userRaw,10);
+      } else if(q.type === 'choice'){
+        userVal = userRaw || null;
+      }
+      const isCorrect = (q.type === 'number' || q.type === 'text') ? (!Number.isNaN(userVal) && Number(userVal) === Number(q.answer)) : (userVal === q.answer);
+      if(isCorrect) correctCount++;
+      details.push({
+        id: q.id, prompt: q.prompt, topic: q.topic, correct: q.answer, user: userVal, ok: isCorrect, explanation: q.explanation
+      });
+    }
+
+    // show results
+    testArea.style.display = 'none';
+    afterDiv.style.display = '';
+    const percent = Math.round(correctCount / questions.length * 100);
+    scoreSummary.innerHTML = `<p>Правильных ответов: <strong>${correctCount}/${questions.length}</strong> — ${percent}%</p>
+      <p>Время: ${timerEl.textContent}</p>`;
+    // detailed list
+    detailedAnswers.innerHTML = '';
+    details.forEach((d, idx)=>{
+      const card = document.createElement('div');
+      card.className = 'qcard';
+      card.innerHTML = `<div class="qtitle">Вопрос ${idx+1} — ${d.topic}</div>
+        <div>${d.prompt}</div>
+        <div style="margin-top:8px"><strong>Ваш ответ:</strong> ${d.user === null || (String(d.user)==='NaN') ? '<em>нет ответа</em>' : String(d.user)}</div>
+        <div style="margin-top:4px"><strong>Правильный ответ:</strong> ${d.correct}</div>
+        <div class="explain"><strong>Краткое пояснение:</strong> ${d.explanation}</div>`;
+      detailedAnswers.appendChild(card);
+    });
+
+    // save best score in localStorage
+    const prevBest = parseInt(localStorage.getItem('final_best')||'0',10) || 0;
+    if(percent > prevBest) localStorage.setItem('final_best', String(percent));
+    // prepare print page content URL
+    preparePrintPage(correctCount, percent, details);
+  }
+
+  // ======= Print / export result =======
+  function preparePrintPage(correctCount, percent, details){
+    const title = `Результат контрольной — ${correctCount}/${questions.length} (${percent}%)`;
+    let html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
+      <style>body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#071029} h1{font-size:18px} .q{margin-bottom:12px;padding:8px;border-bottom:1px solid #eee}</style></head><body>`;
+    html += `<h1>${title}</h1><p>Время: ${timerEl.textContent}</p>`;
+    details.forEach((d, idx)=>{
+      html += `<div class="q"><div><strong>Вопрос ${idx+1} — ${d.topic}</strong></div><div>${d.prompt}</div><div>Ваш ответ: ${d.user === null || (String(d.user)==='NaN') ? 'нет ответа' : d.user}</div><div>Правильный: ${d.correct}</div><div>Пояснение: ${d.explanation}</div></div>`;
+    });
+    html += `<p>Сгенерировано приложением тренажёров. </p>`;
+    html += `</body></html>`;
+    const blob = new Blob([html], {type: 'text/html'});
+    const url = URL.createObjectURL(blob);
+    printOnlyLink.href = url;
+    printOnlyLink.target = '_blank';
+    // open print window when pressing printBtn
+    printBtn.onclick = ()=> {
+      const w = window.open(url, '_blank');
+      if(!w) { alert('Блокировщик всплывающих окон может помешать открыть страницу. Откройте результат вручную.'); return; }
+      // try to invoke print after load
+      w.addEventListener('load', ()=>{ try{ w.print(); } catch(e){} });
+    };
+  }
+
+  // ======= Reset / create test =======
+  function createTest(){
+    finished = false;
+    testArea.style.display = '';
+    afterDiv.style.display = 'none';
+    qIdCounter = 1;
+    questions = generateQuestions(parseInt(numQuestionsEl.value,10));
+    answers = {};
+    currentIndex = 0;
+    renderQuestion(currentIndex);
+    updateProgressDisplay();
+    startTimer();
+  }
+
+  // ======= Events =======
+  prevBtn.addEventListener('click', ()=>{ goPrev(); });
+  nextBtn.addEventListener('click', ()=>{ goNext(); });
+  finishBtn.addEventListener('click', ()=>{ if(confirm('Вы действительно хотите завершить тест и увидеть результаты? Подсказки отключены.')) finishTest(); });
+  resetBtn.addEventListener('click', ()=>{ if(confirm('Создать новый тест? Текущие ответы будут удалены.')) createTest(); });
+  // allow Ctrl+Enter to finish
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ finishTest(); } });
+
+  // init
+  createTest();
+
+})();
+</script>
+</body>
+</html>
