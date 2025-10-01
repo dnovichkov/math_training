@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Решение простых задач — Тренажёр (словесные задачи)</title>
+  <meta name="description" content="Простые словесные задачи для 2 класса: перевод текста в математическую модель, подсказки и режим помощи.">
+  <style>
+    :root{--bg:#f7fbff;--card:#fff;--accent:#2b8cff;--muted:#6b7280;--success:#2aa653;--error:#e03d3d}
+    *{box-sizing:border-box}
+    body{margin:0;padding:14px;font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background:var(--bg);color:#071029}
+    .home-btn { display: inline-block; margin: 10px 0; padding: 10px 14px; font-size: 16px; background-color: #4CAF50; color: white; border-radius: 8px; text-decoration: none; }
+    header{display:flex;gap:12px;align-items:center;max-width:980px;margin:0 auto 12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    h1{font-size:1.15rem;margin:0}
+    .meta{color:var(--muted);font-size:0.92rem}
+    main{max-width:980px;margin:0 auto;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.06)}
+
+    .controls{display:flex;flex-direction:column;gap:8px}
+    .controls-row{display:flex;gap:8px;align-items:center}
+    select,input,button{padding:10px;border-radius:10px;border:1px solid #e6eefc;background:white}
+    .right{margin-left:auto;color:var(--muted)}
+
+    .game{display:flex;flex-direction:column;gap:12px}
+    .panel{padding:14px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid #eef6ff}
+
+    .card{display:flex;gap:12px;align-items:flex-start}
+    .illustration{width:110px;min-width:110px;border-radius:8px;padding:8px;background:linear-gradient(180deg,#f2f8ff,#fff);display:flex;align-items:center;justify-content:center}
+    .problem{flex:1}
+    .problem h2{margin:0;font-size:1.15rem}
+    .problem p{margin:8px 0;font-size:1.05rem}
+
+    .help-box{background:#fbfdff;border:1px solid #e6f0ff;padding:10px;border-radius:8px;color:#16325c}
+    .known-unknown{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .known, .unknown{flex:1;min-width:140px;padding:8px;border-radius:8px;background:#fff;border:1px solid #eef6ff}
+
+    .answer-row{display:flex;gap:8px;align-items:center;margin-top:10px}
+    .answer-row input{width:110px;padding:10px;font-size:1rem;border-radius:8px;border:1px solid #e6eefc}
+
+    .modes{display:flex;gap:8px;align-items:center}
+
+    .feedback{min-height:48px;font-weight:700;text-align:center;margin-top:8px}
+    .feedback.success{color:var(--success)}
+    .feedback.error{color:var(--error)}
+
+    .controls-bottom{display:flex;gap:8px;justify-content:center;margin-top:12px}
+
+    @media(min-width:880px){ .controls{flex-direction:row} .game{flex-direction:row} .panel{flex:1} }
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+  <a href="index.html" class="home-btn">🏠 На главную</a>
+
+  <header>
+    <div class="logo">М2</div>
+    <div>
+      <h1>Словесные задачи</h1>
+      <div class="meta">Учимся переводить текст в математическую модель и решать.</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls" role="region" aria-label="Управление">
+      <div class="controls-row">
+        <label class="sr-only">Уровень</label>
+        <select id="level" aria-label="Уровень">
+          <option value="1">1 — одна операция, числа ≤ 20</option>
+          <option value="2">2 — две операции, возможно с переходом</option>
+          <option value="3">3 — задачи с единицами измерения</option>
+        </select>
+
+        <label class="sr-only">Режим помощи</label>
+        <div class="modes">
+          <label><input type="checkbox" id="helpMode"> Режим помощи</label>
+        </div>
+
+        <label class="sr-only">Длина серии</label>
+        <input id="seriesCount" type="number" min="1" max="30" value="8" style="width:92px" aria-label="Длина серии">
+
+        <div class="right">Лучший: <span id="best">—</span></div>
+      </div>
+
+      <div class="controls-row" style="align-items:center">
+        <input id="student" placeholder="Имя ученика (локально)" style="flex:1">
+        <div class="right">Прогресс: <span id="progress">0/8</span></div>
+      </div>
+    </div>
+
+    <section class="game">
+      <article class="panel">
+        <div class="card">
+          <div class="illustration" id="illustration" aria-hidden="true">
+            <!-- simple SVG placeholder: яблоки -->
+            <svg width="88" height="68" viewBox="0 0 88 68" xmlns="http://www.w3.org/2000/svg">
+              <g fill="#ff7b7b">
+                <circle cx="18" cy="38" r="12" />
+                <circle cx="38" cy="28" r="12" />
+                <circle cx="58" cy="38" r="12" />
+              </g>
+            </svg>
+          </div>
+
+          <div class="problem">
+            <h2 id="title">—</h2>
+            <p id="text">—</p>
+
+            <div class="help-box" id="hintBox">
+              <div><strong>Что известно:</strong></div>
+              <div class="known-unknown">
+                <div class="known" id="known">—</div>
+                <div class="unknown" id="unknown">—</div>
+              </div>
+            </div>
+
+            <div id="helpPrompts" style="margin-top:10px"></div>
+
+            <div class="answer-row">
+              <label>Ответ: <input id="answerInput" type="number" inputmode="numeric" aria-label="Ответ"></label>
+              <button id="checkBtn">Проверить</button>
+              <button id="showBtn">Показать решение</button>
+            </div>
+
+            <div id="explanation" style="margin-top:10px;color:#164062"></div>
+            <div id="feedback" class="feedback" role="status" aria-live="polite">&nbsp;</div>
+          </div>
+        </div>
+
+        <div class="controls-bottom">
+          <button id="nextBtn">Следующая задача</button>
+          <button id="skipBtn">Пропустить</button>
+        </div>
+      </article>
+
+      <aside class="panel" style="width:320px">
+        <h3 style="margin-top:0">Режим помощи</h3>
+        <p style="color:var(--muted)">Если включён — показываются короткие вопросы, которые помогают перевести текст в модель.</p>
+        <div style="margin-top:12px">Результат: <div id="resultSummary" style="margin-top:8px;color:var(--muted)">—</div></div>
+      </aside>
+    </section>
+  </main>
+
+  <footer style="max-width:980px;margin:12px auto 0;color:var(--muted)">Сборник задач основан на программе: Моро и др. (2 класс)</footer>
+
+<script>
+(function(){
+  // DOM
+  const levelEl = document.getElementById('level');
+  const helpModeEl = document.getElementById('helpMode');
+  const titleEl = document.getElementById('title');
+  const textEl = document.getElementById('text');
+  const knownEl = document.getElementById('known');
+  const unknownEl = document.getElementById('unknown');
+  const helpPrompts = document.getElementById('helpPrompts');
+  const answerInput = document.getElementById('answerInput');
+  const checkBtn = document.getElementById('checkBtn');
+  const showBtn = document.getElementById('showBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const skipBtn = document.getElementById('skipBtn');
+  const explanationEl = document.getElementById('explanation');
+  const feedback = document.getElementById('feedback');
+  const seriesCountEl = document.getElementById('seriesCount');
+  const progressEl = document.getElementById('progress');
+  const resultSummary = document.getElementById('resultSummary');
+  const student = document.getElementById('student');
+  const best = document.getElementById('best');
+
+  // state
+  let current = null; // {id,type, text, solution, model, steps}
+  let seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'8',10));
+  let seriesCurrent = 0;
+  let streak = parseInt(localStorage.getItem('wp_streak')||'0',10)||0;
+  let bestv = parseInt(localStorage.getItem('wp_best')||'0',10)||0;
+  best.textContent = bestv>0?('★'.repeat(Math.min(bestv,3))):'—';
+
+  // generators
+  function genLevel1(){
+    const a = rand(2,20); const b = rand(1, Math.min(10,a)); // ensure b<=a for subtraction
+    if(Math.random()<0.6){ // addition
+      return {
+        type:'add', text:`У Маши было ${a} яблок, ей дали ещё ${b}. Сколько стало?`,
+        solution: a+b, model:`${a} + ${b}`,
+        steps:[`Сколько было? ${a}. Сколько дали? ${b}. Сложить: ${a} + ${b} = ${a+b}`]
+      };
+    } else { // subtraction
+      return {
+        type:'sub', text:`У Пети было ${a} конфет, он отдал ${b}. Сколько осталось?`,
+        solution: a-b, model:`${a} - ${b}`,
+        steps:[`Сколько было? ${a}. Сколько отдал? ${b}. Вычесть: ${a} - ${b} = ${a-b}`]
+      };
+    }
+  }
+
+  function genLevel2(){
+    // two-step: either (a + b) - c or (a - b) + c
+    const a = rand(5,25); const b = rand(1,12); const c = rand(1,12);
+    if(Math.random()<0.5){ // (a+b)-c
+      const sol = a+b-c; return {
+        type:'chain', text:`У Вани было ${a} карандашей. Ему дали ещё ${b}. Потом он потерял ${c}. Сколько осталось?`,
+        solution: sol, model:`(${a} + ${b}) - ${c}`,
+        steps:[`Сложить сначала: ${a} + ${b} = ${a+b}. Затем вычесть ${c}: ${a+b} - ${c} = ${sol}`]
+      };
+    } else {
+      const sol = a-b+c; return {
+        type:'chain', text:`У девочки было ${a} наклеек, она отдала ${b}, а потом ей подарили ${c}. Сколько стало?`,
+        solution: sol, model:`(${a} - ${b}) + ${c}`,
+        steps:[`Вычесть сначала: ${a} - ${b} = ${a-b}. Потом добавить ${c}: ${a-b} + ${c} = ${sol}`]
+      };
+    }
+  }
+
+  function genLevel3(){
+    // units: cm/dm style small tasks
+    const dm = rand(1,6); const cm = rand(1,9); const addDm = rand(0,3); const addCm = rand(0,9);
+    if(Math.random()<0.5){
+      // sum
+      const text = `${dm} дм ${cm} см и ещё ${addDm} дм ${addCm} см. Сколько всего сантиметров?`;
+      const total = (dm*10+cm) + (addDm*10+addCm);
+      return { type:'units-sum', text, solution: total, model:`(${dm}*10+${cm})+(${addDm}*10+${addCm})`, steps:[`Переведём в см: ${dm} дм ${cm} см = ${dm*10+cm} см; ${addDm} дм ${addCm} см = ${addDm*10+addCm} см. Сложить: ${dm*10+cm} + ${addDm*10+addCm} = ${total}`] };
+    } else {
+      // subtraction
+      const text = `${dm} дм ${cm} см отдали ${addDm} дм ${addCm} см. Сколько осталось сантиметров?`;
+      const total = (dm*10+cm) - (addDm*10+addCm);
+      return { type:'units-sub', text, solution: total, model:`(${dm}*10+${cm})-(${addDm}*10+${addCm})`, steps:[`Переведём в см и вычтем: ${dm*10+cm} - ${addDm*10+addCm} = ${total}`] };
+    }
+  }
+
+  function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+  // UI helpers
+  function renderProblem(p){
+    current = p;
+    titleEl.textContent = 'Задача';
+    textEl.textContent = p.text;
+    knownEl.textContent = getKnownText(p);
+    unknownEl.textContent = getUnknownText(p);
+    explanationEl.textContent = '';
+    feedback.textContent = '';
+    answerInput.value = '';
+    helpPrompts.innerHTML = '';
+    if(helpModeEl.checked) renderHelpPrompts(p);
+    // focus answer
+    answerInput.focus();
+  }
+
+  function getKnownText(p){
+    if(p.type==='add' || p.type==='sub' || p.type==='chain') return p.text.match(/\d+/g).slice(0,3).join(', ');
+    if(p.type.startsWith('units')) return 'Длины указаны в тексте.';
+    return '';
+  }
+  function getUnknownText(p){ return 'Нужно найти целое число (ответ в условных единицах).'; }
+
+  function renderHelpPrompts(p){
+    helpPrompts.innerHTML = '';
+    const list = document.createElement('div'); list.className='help-list';
+    const q1 = document.createElement('div'); q1.textContent = '1) Что в задаче дано?'; list.appendChild(q1);
+    const q2 = document.createElement('div'); q2.textContent = '2) Что требуется найти?'; list.appendChild(q2);
+    const q3 = document.createElement('div'); q3.textContent = '3) Какая операция нужна: + или - ? Возможно две операции?'; list.appendChild(q3);
+    helpPrompts.appendChild(list);
+  }
+
+  function generate(){ const lvl = Number(levelEl.value); if(lvl===1) renderProblem(genLevel1()); else if(lvl===2) renderProblem(genLevel2()); else renderProblem(genLevel3()); }
+
+  // check answer
+  function check(){ const val = parseInt(answerInput.value||''); if(Number.isNaN(val)){ feedback.className='feedback error'; feedback.textContent='Введите число в поле ответа.'; return; }
+    if(val === current.solution){ feedback.className='feedback success'; feedback.textContent='Верно!'; onCorrect(); }
+    else { feedback.className='feedback error'; feedback.textContent='Неверно — см. объяснение.'; showExplanation(); onWrong(); }
+  }
+
+  function showExplanation(){ explanationEl.innerHTML = '<strong>Решение:</strong><br>' + (current.model ? ('Модель: ' + current.model + '<br>') : '') + (current.steps ? current.steps.join('<br>') : ''); }
+
+  function onCorrect(){ saveResult(true); seriesCurrent +=1; updateProgress(); setTimeout(()=>{ generate(); }, 700); }
+  function onWrong(){ saveResult(false); }
+
+  function saveResult(ok){ let streakNow = parseInt(localStorage.getItem('wp_streak')||'0',10)||0; let bestNow = parseInt(localStorage.getItem('wp_best')||'0',10)||0; if(ok){ streakNow +=1; if(streakNow>bestNow) bestNow = streakNow; } else streakNow = 0; localStorage.setItem('wp_streak',String(streakNow)); localStorage.setItem('wp_best',String(bestNow)); localStorage.setItem('wp_student', student.value||''); best.textContent = bestNow>0?('★'.repeat(Math.min(bestNow,3))):'—'; resultSummary.textContent = 'Последний: '+(ok?'правильно':'неправильно')+'. Серия: '+streakNow+'. Лучшее: '+bestNow+'.'; }
+
+  function onNext(){ generate(); }
+
+  function updateProgress(){ seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'8',10)); progressEl.textContent = seriesCurrent + '/' + seriesTotal; }
+
+  // events
+  checkBtn.addEventListener('click', check);
+  showBtn.addEventListener('click', ()=>{ showExplanation(); });
+  nextBtn.addEventListener('click', onNext);
+  skipBtn.addEventListener('click', ()=>{ saveResult(false); generate(); });
+  levelEl.addEventListener('change', ()=>{ seriesCurrent=0; updateProgress(); generate(); });
+  helpModeEl.addEventListener('change', ()=>{ if(helpModeEl.checked) renderHelpPrompts(current); else helpPrompts.innerHTML=''; });
+
+  // keyboard
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ check(); } if(e.key==='n'){ generate(); } });
+
+  // init
+  generate();
+})();
+</script>
+</body>
+</html>
