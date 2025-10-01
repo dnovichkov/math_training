@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Таблица сложения и вычитания — Тренажёр</title>
-  <meta name="description" content="Тренажёр: таблица примеров (5×5 или 10×10). Режимы: на время / без времени. Баллы = точность + скорость → медали.">
+  <meta name="description" content="Тренажёр: таблица примеров (3×3/5×5/10×10). Режимы: на время / без времени. Баллы = точность + скорость → медали.">
   <style>
     :root{
       --bg:#f6fbff; --card:#fff; --accent:#2b8cff; --muted:#6b7280;
@@ -36,6 +36,7 @@
     .feedback{margin-top:12px;font-weight:700;text-align:center;min-height:36px}
     .feedback.ok{color:var(--ok)} .feedback.bad{color:var(--bad)}
     .legend{margin-top:12px;color:var(--muted);font-size:0.92rem}
+    input.revealed{background:#fff7e6}
     @media(min-width:880px){ .top-controls{flex-direction:row;align-items:center} .grid{ } }
   </style>
 </head>
@@ -56,12 +57,14 @@
         <label for="level">Уровень:</label>
         <select id="level" aria-label="Уровень">
           <option value="1">1 — сложение до 10 (без перехода)</option>
-          <option value="2">2 — сложение/вычитание до 20 (с переходом)</option>
-          <option value="3">3 — смешанные до 100</option>
+          <option value="2">2 — вычитание до 10</option>
+          <option value="3">3 — сложение/вычитание до 20 (с переходом)</option>
+          <option value="4">4 — смешанные до 100</option>
         </select>
 
         <label for="size">Размер:</label>
         <select id="size" aria-label="Размер">
+          <option value="3">3 × 3</option>
           <option value="5">5 × 5</option>
           <option value="10">10 × 10</option>
         </select>
@@ -80,7 +83,7 @@
 
       <div class="row">
         <div class="toolbar" style="width:100%;justify-content:flex-start;">
-          <label>Режим: <select id="modeSelect"><option value="mixed">сложение+вычитание</option><option value="add">только +</option><option value="sub">только −</option></select></label>
+          <!-- Режим убран (автоматически выбирается по уровню) -->
           <label>Показ/скрыть ответы: <button id="revealBtn" class="small">Показать</button></label>
           <div style="margin-left:8px" class="legend">Клавиши: Enter — перейти/проверить, стрелки — навигация</div>
         </div>
@@ -118,7 +121,6 @@
   const checkBtn = document.getElementById('checkBtn');
   const resetBtn = document.getElementById('resetBtn');
   const revealBtn = document.getElementById('revealBtn');
-  const modeSelect = document.getElementById('modeSelect');
 
   const boardEl = document.getElementById('board');
   const timeEl = document.getElementById('time');
@@ -130,23 +132,45 @@
 
   // State
   let grid = []; // {expr, ans, inputEl, status}
-  let rows=5, cols=5;
+  let rows=3, cols=3;
   let running=false;
   let timerId=null; let startTs=0;
   let seconds=0;
   let reveal=false;
 
+  // For reveal/hide: remember which indices we auto-filled and original user values
+  let autoRevealed = new Set();
+  let originalValues = {};
+
+  // Determine mode automatically from level:
+  // level 1 -> add, 2 -> sub, 3,4 -> mixed
+  function modeForLevel(level){
+    if(level === 1) return 'add';
+    if(level === 2) return 'sub';
+    return 'mixed';
+  }
+
   // Generation rules: produce natural numbers and no negative/zero results
   function genProblem(level, mode){
-    // level: 1,2,3
+    // level: 1..4
     // mode: 'mixed','add','sub'
     // ensure natural numbers results (>=1)
+
     if(level === 1){
       // addition only, sum <= 10, no carry: choose a,b >=1 such that a+b <=10
       const a = randInt(1,9); const b = randInt(1, 10 - a);
       return {op:'+', a:a, b:b, ans: a + b};
     }
+
     if(level === 2){
+      // new level: subtraction up to 10 (result >=1)
+      // choose a between 2..10, b between 1..a-1
+      const a = randInt(2,10);
+      const b = randInt(1, a-1);
+      return {op:'-', a:a, b:b, ans: a - b};
+    }
+
+    if(level === 3){
       // addition or subtraction up to 20; if addition ensure sum<=20; if subtraction ensure a>b
       if(mode === 'add' || (mode==='mixed' && Math.random()<0.6)){
         const a = randInt(1,19);
@@ -159,8 +183,9 @@
         return {op:'-', a:a, b:b, ans:a-b};
       }
     }
-    // level 3: mixed up to 100
-    if(level === 3){
+
+    // level 4: mixed up to 100
+    if(level === 4){
       if(mode === 'add' || (mode==='mixed' && Math.random()<0.5)){
         const a = randInt(1,99);
         const b = randInt(1, Math.max(1, 100 - a));
@@ -171,16 +196,21 @@
         return {op:'-', a:a, b:b, ans:a-b};
       }
     }
+
     // fallback
     return {op:'+', a:1,b:1,ans:2};
   }
 
   function buildGrid(){
+    // clear any previous auto-reveal state
+    autoRevealed.clear();
+    originalValues = {};
+
     boardEl.innerHTML = '';
     rows = parseInt(sizeEl.value,10);
     cols = rows;
     const level = Number(levelEl.value);
-    const mode = modeSelect.value;
+    const mode = modeForLevel(level);
 
     grid = [];
     const container = document.createElement('div');
@@ -229,9 +259,7 @@
       e.preventDefault();
       const next = idx + 1;
       if(grid[next]) grid[next].inputEl.focus();
-      else { // last: optionally auto-check
-        // do nothing by default
-      }
+      else { /* last cell */ }
     } else if(e.key === 'ArrowRight'){
       e.preventDefault(); const next = Math.min(grid.length-1, idx+1); grid[next].inputEl.focus();
     } else if(e.key === 'ArrowLeft'){
@@ -296,11 +324,6 @@
         g.cellEl.style.boxShadow = '0 0 0 3px rgba(224,61,61,0.06)';
         g.cellEl.style.border = '1px solid rgba(224,61,61,0.18)';
       }
-      // optionally reveal correct answer
-      if(reveal && !ok){
-        g.inputEl.value = String(g.ans);
-        g.inputEl.classList.add('revealed');
-      }
     });
     correctEl.textContent = String(correct);
     // score: base points per correct, time bonus if timed
@@ -336,23 +359,37 @@
     checkAll();
   }
 
-  // reveal toggle
+  // reveal toggle: autofil indices only when empty or incorrect; store originals to restore on hide
   function toggleReveal(){
     reveal = !reveal;
     revealBtn.textContent = reveal ? 'Скрыть' : 'Показать';
     if(reveal){
-      // fill in correct answers for empty/wrong
-      grid.forEach(g=>{
-        if(g.inputEl.value.trim() === '' || String(parseInt(g.inputEl.value||'') ) !== String(g.ans)){
+      // reveal: fill answers where empty or wrong
+      autoRevealed.clear();
+      originalValues = {};
+      grid.forEach((g, idx)=>{
+        const valRaw = g.inputEl.value.trim();
+        const val = valRaw === '' ? NaN : parseInt(valRaw,10);
+        const ok = (!Number.isNaN(val)) && (val === g.ans);
+        if(!ok){
+          // store original
+          originalValues[idx] = g.inputEl.value;
           g.inputEl.value = String(g.ans);
-          g.inputEl.style.background = '#fff';
+          g.inputEl.classList.add('revealed');
+          autoRevealed.add(idx);
         }
       });
     } else {
-      // remove revealed styling but do not clear user answers
-      grid.forEach(g=>{
-        g.inputEl.style.background = '';
+      // hide: restore original user values for auto-filled indices
+      autoRevealed.forEach(idx => {
+        const g = grid[idx];
+        if(!g) return;
+        const orig = originalValues.hasOwnProperty(idx) ? originalValues[idx] : '';
+        g.inputEl.value = orig;
+        g.inputEl.classList.remove('revealed');
       });
+      autoRevealed.clear();
+      originalValues = {};
     }
   }
 
@@ -362,20 +399,16 @@
     startTimer();
   });
   resetBtn.addEventListener('click', ()=>{ resetAll(); });
-  checkBtn.addEventListener('click', ()=>{ checkAll(); });
+  checkBtn.addEventListener('click', ()=>{ checkAndStore(); });
   revealBtn.addEventListener('click', ()=>{ toggleReveal(); });
 
   // regenerate on option change but keep minimal changes: only rebuild grid
   levelEl.addEventListener('change', ()=>{ if(!running) buildGrid(); });
   sizeEl.addEventListener('change', ()=>{ if(!running) buildGrid(); });
-  modeSelect.addEventListener('change', ()=>{ if(!running) buildGrid(); });
   timedEl.addEventListener('change', ()=>{ /* no rebuild required */ });
 
   // initial build
   buildGrid();
-
-  // small accessibility: allow Enter to check when focus is on any button
-  document.addEventListener('keydown',(e)=>{ if(e.key === 'F5'){ return; } });
 
   // Save best in localStorage: when a run finishes successfully (all correct), store best score
   function storeBest(res){
@@ -398,9 +431,6 @@
     storeBest(res);
     return res;
   };
-  // replace button handler to use wrapper
-  checkBtn.removeEventListener('click', ()=>{});
-  checkBtn.addEventListener('click', window.checkAndStore);
 
 })();
 </script>
