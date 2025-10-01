@@ -173,59 +173,105 @@
   let bestv = parseInt(localStorage.getItem('wp_best')||'0',10)||0;
   best.textContent = bestv>0?('★'.repeat(Math.min(bestv,3))):'—';
 
-  // generators
+  // helpers
+  function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+  // generators — ensure all solutions and intermediate steps are natural (>=0)
   function genLevel1(){
-    const a = rand(2,20); const b = rand(1, Math.min(10,a)); // ensure b<=a for subtraction
+    const a = rand(2,20);
+    const b = rand(1, Math.min(10,a)); // ensure b<=a for subtraction
     if(Math.random()<0.6){ // addition
-      return {
-        type:'add', text:`У Маши было ${a} яблок, ей дали ещё ${b}. Сколько стало?`,
-        solution: a+b, model:`${a} + ${b}`,
-        steps:[`Сколько было? ${a}. Сколько дали? ${b}. Сложить: ${a} + ${b} = ${a+b}`]
-      };
-    } else { // subtraction
-      return {
-        type:'sub', text:`У Пети было ${a} конфет, он отдал ${b}. Сколько осталось?`,
-        solution: a-b, model:`${a} - ${b}`,
-        steps:[`Сколько было? ${a}. Сколько отдал? ${b}. Вычесть: ${a} - ${b} = ${a-b}`]
-      };
+      return { type:'add', text:`У Маши было ${a} яблок, ей дали ещё ${b}. Сколько стало?`, solution: a+b, model:`${a} + ${b}`, steps:[`Сколько было? ${a}. Сколько дали? ${b}. Сложить: ${a} + ${b} = ${a+b}`] };
+    } else {
+      return { type:'sub', text:`У Пети было ${a} конфет, он отдал ${b}. Сколько осталось?`, solution: a-b, model:`${a} - ${b}`, steps:[`Сколько было? ${a}. Сколько отдал? ${b}. Вычесть: ${a} - ${b} = ${a-b}`] };
     }
   }
 
   function genLevel2(){
-    // two-step: either (a + b) - c or (a - b) + c
-    const a = rand(5,25); const b = rand(1,12); const c = rand(1,12);
-    if(Math.random()<0.5){ // (a+b)-c
-      const sol = a+b-c; return {
-        type:'chain', text:`У Вани было ${a} карандашей. Ему дали ещё ${b}. Потом он потерял ${c}. Сколько осталось?`,
-        solution: sol, model:`(${a} + ${b}) - ${c}`,
-        steps:[`Сложить сначала: ${a} + ${b} = ${a+b}. Затем вычесть ${c}: ${a+b} - ${c} = ${sol}`]
-      };
-    } else {
-      const sol = a-b+c; return {
-        type:'chain', text:`У девочки было ${a} наклеек, она отдала ${b}, а потом ей подарили ${c}. Сколько стало?`,
-        solution: sol, model:`(${a} - ${b}) + ${c}`,
-        steps:[`Вычесть сначала: ${a} - ${b} = ${a-b}. Потом добавить ${c}: ${a-b} + ${c} = ${sol}`]
-      };
+    // two-step: generate scenarios but guarantee non-negative intermediate steps and final answer
+    // We'll try until constraints satisfied
+    while(true){
+      const a = rand(5,25);
+      const b = rand(1,12);
+      const c = rand(1,12);
+      if(Math.random()<0.5){ // (a+b)-c, require a+b >= c
+        if(a + b >= c){
+          const sol = a + b - c;
+          return {
+            type:'chain',
+            text:`У Вани было ${a} карандашей. Ему дали ещё ${b}. Потом он потерял ${c}. Сколько осталось?`,
+            solution: sol,
+            model:`(${a} + ${b}) - ${c}`,
+            steps:[`Сложить сначала: ${a} + ${b} = ${a+b}. Затем вычесть ${c}: ${a+b} - ${c} = ${sol}`]
+          };
+        }
+      } else { // (a-b)+c, require a >= b so first subtraction non-negative
+        if(a >= b){
+          const sol = a - b + c;
+          return {
+            type:'chain',
+            text:`У девочки было ${a} наклеек, она отдала ${b}, а потом ей подарили ${c}. Сколько стало?`,
+            solution: sol,
+            model:`(${a} - ${b}) + ${c}`,
+            steps:[`Вычесть сначала: ${a} - ${b} = ${a-b}. Потом добавить ${c}: ${a-b} + ${c} = ${sol}`]
+          };
+        }
+      }
+      // otherwise loop again
     }
   }
 
   function genLevel3(){
-    // units: cm/dm style small tasks
-    const dm = rand(1,6); const cm = rand(1,9); const addDm = rand(0,3); const addCm = rand(0,9);
-    if(Math.random()<0.5){
-      // sum
-      const text = `${dm} дм ${cm} см и ещё ${addDm} дм ${addCm} см. Сколько всего сантиметров?`;
-      const total = (dm*10+cm) + (addDm*10+addCm);
-      return { type:'units-sum', text, solution: total, model:`(${dm}*10+${cm})+(${addDm}*10+${addCm})`, steps:[`Переведём в см: ${dm} дм ${cm} см = ${dm*10+cm} см; ${addDm} дм ${addCm} см = ${addDm*10+addCm} см. Сложить: ${dm*10+cm} + ${addDm*10+addCm} = ${total}`] };
-    } else {
-      // subtraction
-      const text = `${dm} дм ${cm} см отдали ${addDm} дм ${addCm} см. Сколько осталось сантиметров?`;
-      const total = (dm*10+cm) - (addDm*10+addCm);
-      return { type:'units-sub', text, solution: total, model:`(${dm}*10+${cm})-(${addDm}*10+${addCm})`, steps:[`Переведём в см и вычтем: ${dm*10+cm} - ${addDm*10+addCm} = ${total}`] };
+    // units: sums and subtractions with cm/dm — ensure final result >= 0
+    while(true){
+      const dm = rand(1,6); const cm = rand(0,9); const addDm = rand(0,3); const addCm = rand(0,9);
+      if(Math.random()<0.5){
+        // sum — always non-negative
+        const text = `${dm} дм ${cm} см и ещё ${addDm} дм ${addCm} см. Сколько всего сантиметров?`;
+        const total = (dm*10+cm) + (addDm*10+addCm);
+        return {
+          type:'units-sum',
+          text,
+          solution: total,
+          model:`(${dm}*10+${cm})+(${addDm}*10+${addCm})`,
+          steps:[`Переведём в см: ${dm} дм ${cm} см = ${dm*10+cm} см; ${addDm} дм ${addCm} см = ${addDm*10+addCm} см. Сложить: ${dm*10+cm} + ${addDm*10+addCm} = ${total}`]
+        };
+      } else {
+        // subtraction: ensure (dm*10+cm) >= (addDm*10+addCm)
+        const left = dm*10 + cm; const right = addDm*10 + addCm;
+        if(left >= right){
+          const text = `Было ${dm} дм ${cm} см. Отняли ${addDm} дм ${addCm} см. Сколько осталось сантиметров?`;
+          const total = left - right;
+          return {
+            type:'units-sub',
+            text,
+            solution: total,
+            model:`(${dm}*10+${cm})-(${addDm}*10+${addCm})`,
+            steps:[`Переведём в см и вычтем: ${left} - ${right} = ${total}`]
+          };
+        }
+      }
     }
   }
 
-  function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  // Robust helpers for extracting 'known' numbers — avoids exceptions if no digits found
+  function getKnownText(p){
+    try {
+      if(!p || !p.text) return '—';
+      const nums = p.text.match(/\d+/g);
+      if(!nums || nums.length === 0) return '—';
+      return nums.slice(0,3).join(', ');
+    } catch(err){
+      console.error('getKnownText error:', err);
+      return '—';
+    }
+  }
+
+  function getUnknownText(p){
+    if(!p) return '—';
+    if(p.type && p.type.startsWith('units')) return 'Найдите длину (см).';
+    return 'Нужно найти целое число (ответ в условных единицах).';
+  }
 
   // UI helpers
   function renderProblem(p){
@@ -239,29 +285,25 @@
     answerInput.value = '';
     helpPrompts.innerHTML = '';
     if(helpModeEl.checked) renderHelpPrompts(p);
-    // focus answer
     answerInput.focus();
   }
 
-  function getKnownText(p){
-    if(p.type==='add' || p.type==='sub' || p.type==='chain') return p.text.match(/\d+/g).slice(0,3).join(', ');
-    if(p.type.startsWith('units')) return 'Длины указаны в тексте.';
-    return '';
-  }
-  function getUnknownText(p){ return 'Нужно найти целое число (ответ в условных единицах).'; }
-
   function renderHelpPrompts(p){
-    helpPrompts.innerHTML = '';
-    const list = document.createElement('div'); list.className='help-list';
-    const q1 = document.createElement('div'); q1.textContent = '1) Что в задаче дано?'; list.appendChild(q1);
-    const q2 = document.createElement('div'); q2.textContent = '2) Что требуется найти?'; list.appendChild(q2);
-    const q3 = document.createElement('div'); q3.textContent = '3) Какая операция нужна: + или - ? Возможно две операции?'; list.appendChild(q3);
-    helpPrompts.appendChild(list);
+    try {
+      helpPrompts.innerHTML = '';
+      const list = document.createElement('div'); list.className='help-list';
+      const q1 = document.createElement('div'); q1.textContent = '1) Что в задаче дано?'; list.appendChild(q1);
+      const q2 = document.createElement('div'); q2.textContent = '2) Что требуется найти?'; list.appendChild(q2);
+      const q3 = document.createElement('div'); q3.textContent = '3) Какая операция нужна: + или - ? Возможно две операции?'; list.appendChild(q3);
+      helpPrompts.appendChild(list);
+    } catch(err){
+      console.error('renderHelpPrompts error:', err);
+      helpPrompts.innerHTML = '';
+    }
   }
 
   function generate(){ const lvl = Number(levelEl.value); if(lvl===1) renderProblem(genLevel1()); else if(lvl===2) renderProblem(genLevel2()); else renderProblem(genLevel3()); }
 
-  // check answer
   function check(){ const val = parseInt(answerInput.value||''); if(Number.isNaN(val)){ feedback.className='feedback error'; feedback.textContent='Введите число в поле ответа.'; return; }
     if(val === current.solution){ feedback.className='feedback success'; feedback.textContent='Верно!'; onCorrect(); }
     else { feedback.className='feedback error'; feedback.textContent='Неверно — см. объяснение.'; showExplanation(); onWrong(); }
@@ -285,8 +327,6 @@
   skipBtn.addEventListener('click', ()=>{ saveResult(false); generate(); });
   levelEl.addEventListener('change', ()=>{ seriesCurrent=0; updateProgress(); generate(); });
   helpModeEl.addEventListener('change', ()=>{ if(helpModeEl.checked) renderHelpPrompts(current); else helpPrompts.innerHTML=''; });
-
-  // keyboard
   document.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ check(); } if(e.key==='n'){ generate(); } });
 
   // init
