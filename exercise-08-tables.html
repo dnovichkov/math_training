@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Таблица сложения и вычитания — Тренажёр</title>
+  <meta name="description" content="Тренажёр: таблица примеров (5×5 или 10×10). Режимы: на время / без времени. Баллы = точность + скорость → медали.">
+  <style>
+    :root{
+      --bg:#f6fbff; --card:#fff; --accent:#2b8cff; --muted:#6b7280;
+      --ok:#2aa653; --bad:#e03d3d; --cell:#f8fbff;
+      --btn-bg:#fff; --btn-border:#dbeafe;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;padding:12px;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#071029}
+    .home-btn{display:inline-block;margin:8px 0;padding:10px 14px;font-size:15px;background-color:#4CAF50;color:white;border-radius:8px;text-decoration:none}
+    header{display:flex;gap:12px;align-items:center;max-width:1100px;margin:6px auto 12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    h1{font-size:1.05rem;margin:0}
+    .meta{color:var(--muted);font-size:0.9rem}
+    main{max-width:1100px;margin:0 auto;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,0.06)}
+    .top-controls{display:flex;flex-direction:column;gap:8px;padding:8px}
+    .row{display:flex;gap:8px;align-items:center}
+    select,input[type="number"],button{padding:10px;border-radius:10px;border:1px solid var(--btn-border);background:var(--btn-bg);font-size:0.98rem}
+    .spacer{flex:1}
+    .grid-wrap{padding:10px}
+    .grid{display:grid;gap:8px;justify-items:stretch;align-items:stretch}
+    .cell{background:var(--cell);border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:64px;min-height:70px}
+    .expr{font-weight:800;font-size:1.05rem;margin-bottom:8px}
+    .cell input{width:72px;padding:8px;border-radius:8px;border:1px solid #dbeafe;text-align:center;font-weight:700}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:10px}
+    .small{font-size:0.9rem;padding:8px 10px}
+    .status{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
+    .stat{padding:8px;border-radius:8px;background:#fbfdff;border:1px solid #eef6ff}
+    .feedback{margin-top:12px;font-weight:700;text-align:center;min-height:36px}
+    .feedback.ok{color:var(--ok)} .feedback.bad{color:var(--bad)}
+    .legend{margin-top:12px;color:var(--muted);font-size:0.92rem}
+    @media(min-width:880px){ .top-controls{flex-direction:row;align-items:center} .grid{ } }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="home-btn">🏠 На главную</a>
+
+  <header>
+    <div class="logo">M2</div>
+    <div>
+      <h1>Таблица сложения и вычитания</h1>
+      <div class="meta">Тренируем автоматизм — скорость и точность</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="top-controls">
+      <div class="row">
+        <label for="level">Уровень:</label>
+        <select id="level" aria-label="Уровень">
+          <option value="1">1 — сложение до 10 (без перехода)</option>
+          <option value="2">2 — сложение/вычитание до 20 (с переходом)</option>
+          <option value="3">3 — смешанные до 100</option>
+        </select>
+
+        <label for="size">Размер:</label>
+        <select id="size" aria-label="Размер">
+          <option value="5">5 × 5</option>
+          <option value="10">10 × 10</option>
+        </select>
+
+        <label><input type="checkbox" id="timed"> Режим «на время»</label>
+
+        <label for="timeLimit" style="margin-left:6px">Лимит (с):</label>
+        <input id="timeLimit" type="number" min="10" max="3600" value="120" style="width:96px">
+
+        <div class="spacer"></div>
+
+        <button id="startBtn" class="small">Начать</button>
+        <button id="checkBtn" class="small">Проверить всё</button>
+        <button id="resetBtn" class="small">Сброс</button>
+      </div>
+
+      <div class="row">
+        <div class="toolbar" style="width:100%;justify-content:flex-start;">
+          <label>Режим: <select id="modeSelect"><option value="mixed">сложение+вычитание</option><option value="add">только +</option><option value="sub">только −</option></select></label>
+          <label>Показ/скрыть ответы: <button id="revealBtn" class="small">Показать</button></label>
+          <div style="margin-left:8px" class="legend">Клавиши: Enter — перейти/проверить, стрелки — навигация</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-wrap">
+      <div id="metaStatus" class="status" aria-live="polite">
+        <div class="stat">Время: <span id="time">0</span> с</div>
+        <div class="stat">Правильно: <span id="correct">0</span></div>
+        <div class="stat">Всего: <span id="total">0</span></div>
+        <div class="stat">Баллы: <span id="score">0</span></div>
+        <div class="stat">Медаль: <strong id="medal">—</strong></div>
+      </div>
+
+      <div id="board" style="margin-top:12px"></div>
+
+      <div id="afterArea" style="margin-top:12px">
+        <div id="finalMsg" class="feedback" aria-live="polite"></div>
+      </div>
+    </div>
+  </main>
+
+<script>
+(function(){
+  // Helpers
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
+  // DOM
+  const levelEl = document.getElementById('level');
+  const sizeEl = document.getElementById('size');
+  const timedEl = document.getElementById('timed');
+  const timeLimitEl = document.getElementById('timeLimit');
+  const startBtn = document.getElementById('startBtn');
+  const checkBtn = document.getElementById('checkBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const revealBtn = document.getElementById('revealBtn');
+  const modeSelect = document.getElementById('modeSelect');
+
+  const boardEl = document.getElementById('board');
+  const timeEl = document.getElementById('time');
+  const correctEl = document.getElementById('correct');
+  const totalEl = document.getElementById('total');
+  const scoreEl = document.getElementById('score');
+  const medalEl = document.getElementById('medal');
+  const finalMsg = document.getElementById('finalMsg');
+
+  // State
+  let grid = []; // {expr, ans, inputEl, status}
+  let rows=5, cols=5;
+  let running=false;
+  let timerId=null; let startTs=0;
+  let seconds=0;
+  let reveal=false;
+
+  // Generation rules: produce natural numbers and no negative/zero results
+  function genProblem(level, mode){
+    // level: 1,2,3
+    // mode: 'mixed','add','sub'
+    // ensure natural numbers results (>=1)
+    if(level === 1){
+      // addition only, sum <= 10, no carry: choose a,b >=1 such that a+b <=10
+      const a = randInt(1,9); const b = randInt(1, 10 - a);
+      return {op:'+', a:a, b:b, ans: a + b};
+    }
+    if(level === 2){
+      // addition or subtraction up to 20; if addition ensure sum<=20; if subtraction ensure a>b
+      if(mode === 'add' || (mode==='mixed' && Math.random()<0.6)){
+        const a = randInt(1,19);
+        const b = randInt(1, Math.max(1, 20 - a));
+        return {op:'+', a:a, b:b, ans:a+b};
+      } else {
+        // subtraction
+        const a = randInt(2,20);
+        const b = randInt(1, a-1); // ensure result >=1
+        return {op:'-', a:a, b:b, ans:a-b};
+      }
+    }
+    // level 3: mixed up to 100
+    if(level === 3){
+      if(mode === 'add' || (mode==='mixed' && Math.random()<0.5)){
+        const a = randInt(1,99);
+        const b = randInt(1, Math.max(1, 100 - a));
+        return {op:'+', a:a, b:b, ans:a+b};
+      } else {
+        const a = randInt(2,100);
+        const b = randInt(1,a-1);
+        return {op:'-', a:a, b:b, ans:a-b};
+      }
+    }
+    // fallback
+    return {op:'+', a:1,b:1,ans:2};
+  }
+
+  function buildGrid(){
+    boardEl.innerHTML = '';
+    rows = parseInt(sizeEl.value,10);
+    cols = rows;
+    const level = Number(levelEl.value);
+    const mode = modeSelect.value;
+
+    grid = [];
+    const container = document.createElement('div');
+    container.className = 'grid';
+    container.style.gridTemplateColumns = `repeat(${cols}, minmax(64px,1fr))`;
+
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const p = genProblem(level, mode);
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        const expr = document.createElement('div');
+        expr.className = 'expr';
+        expr.textContent = `${p.a} ${p.op} ${p.b}`;
+        const inp = document.createElement('input');
+        inp.type = 'number';
+        inp.inputMode = 'numeric';
+        inp.dataset.idx = grid.length;
+        inp.placeholder = '';
+        inp.autocomplete = 'off';
+        inp.addEventListener('keydown', onCellKeyDown);
+        inp.addEventListener('focus', ()=>{ if(!running) startTimer(); });
+        cell.appendChild(expr);
+        cell.appendChild(inp);
+        container.appendChild(cell);
+
+        grid.push({exprText: `${p.a} ${p.op} ${p.b}`, a:p.a, b:p.b, op:p.op, ans:p.ans, inputEl: inp, cellEl: cell, status: 'idle' });
+      }
+    }
+
+    boardEl.appendChild(container);
+    totalEl.textContent = String(grid.length);
+    correctEl.textContent = '0';
+    scoreEl.textContent = '0';
+    medalEl.textContent = '—';
+    finalMsg.textContent = '';
+    // focus first input
+    setTimeout(()=>{ if(grid[0] && grid[0].inputEl) grid[0].inputEl.focus(); }, 50);
+  }
+
+  // Keyboard navigation & actions within cells
+  function onCellKeyDown(e){
+    const idx = Number(this.dataset.idx);
+    if(e.key === 'Enter'){
+      // move to next cell or check if last
+      e.preventDefault();
+      const next = idx + 1;
+      if(grid[next]) grid[next].inputEl.focus();
+      else { // last: optionally auto-check
+        // do nothing by default
+      }
+    } else if(e.key === 'ArrowRight'){
+      e.preventDefault(); const next = Math.min(grid.length-1, idx+1); grid[next].inputEl.focus();
+    } else if(e.key === 'ArrowLeft'){
+      e.preventDefault(); const prev = Math.max(0, idx-1); grid[prev].inputEl.focus();
+    } else if(e.key === 'ArrowDown'){
+      e.preventDefault(); const down = idx + cols; if(grid[down]) grid[down].inputEl.focus();
+    } else if(e.key === 'ArrowUp'){
+      e.preventDefault(); const up = idx - cols; if(grid[up]) grid[up].inputEl.focus();
+    }
+  }
+
+  function startTimer(){
+    if(running) return;
+    running = true;
+    startTs = Date.now();
+    seconds = 0;
+    timeEl.textContent = '0';
+    if(timedEl.checked){
+      // set countdown until timeLimit
+      const limit = clamp(parseInt(timeLimitEl.value||'120',10),10,3600);
+      timerId = setInterval(()=>{
+        seconds = Math.floor((Date.now() - startTs)/1000);
+        timeEl.textContent = String(seconds);
+        if(seconds >= limit){
+          clearInterval(timerId); timerId = null;
+          finishRun();
+        }
+      }, 250);
+    } else {
+      timerId = setInterval(()=>{
+        seconds = Math.floor((Date.now() - startTs)/1000);
+        timeEl.textContent = String(seconds);
+      }, 500);
+    }
+  }
+
+  function stopTimer(){
+    if(timerId) { clearInterval(timerId); timerId = null; }
+    running = false;
+  }
+
+  function resetAll(){
+    stopTimer();
+    buildGrid();
+  }
+
+  function checkAll(){
+    // validate inputs and mark cells
+    let correct = 0;
+    grid.forEach((g, idx)=>{
+      const valRaw = g.inputEl.value.trim();
+      const val = valRaw === '' ? NaN : parseInt(valRaw,10);
+      const ok = (!Number.isNaN(val)) && (val === g.ans);
+      g.status = ok ? 'ok' : 'wrong';
+      // visual
+      g.cellEl.style.outline = 'none';
+      if(ok){
+        g.cellEl.style.boxShadow = '0 0 0 3px rgba(42,166,83,0.09)'; // green hint
+        g.cellEl.style.border = '1px solid rgba(42,166,83,0.25)';
+        correct++;
+      } else {
+        g.cellEl.style.boxShadow = '0 0 0 3px rgba(224,61,61,0.06)';
+        g.cellEl.style.border = '1px solid rgba(224,61,61,0.18)';
+      }
+      // optionally reveal correct answer
+      if(reveal && !ok){
+        g.inputEl.value = String(g.ans);
+        g.inputEl.classList.add('revealed');
+      }
+    });
+    correctEl.textContent = String(correct);
+    // score: base points per correct, time bonus if timed
+    const total = grid.length;
+    const basePoints = correct * 10;
+    let timeBonus = 0;
+    if(seconds > 0){
+      // faster => bigger bonus. targetTime proportional to cells: e.g., 3s per cell
+      const target = total * 3;
+      // if finished under target, full bonus, else scaled down; clamp >=0
+      timeBonus = Math.max(0, Math.round((Math.max(0,(target - seconds)) / target) * 50));
+    }
+    const score = basePoints + timeBonus;
+    scoreEl.textContent = String(score);
+    // medal thresholds (tuned empirically)
+    const accuracy = total ? (correct/total) : 0;
+    let medal = '—';
+    if(accuracy === 1 && seconds <= (total * 2.5)) medal = '🥇 Золото';
+    else if(accuracy >= 0.9 && seconds <= (total * 4)) medal = '🥈 Серебро';
+    else if(accuracy >= 0.7) medal = '🥉 Бронза';
+    else medal = '—';
+    medalEl.textContent = medal;
+    // final message
+    finalMsg.className = 'feedback ' + (correct === total ? 'ok' : 'bad');
+    finalMsg.textContent = `Правильных ${correct}/${total}. Баллы ${score}. ${medal !== '—' ? 'Награда: ' + medal : ''}`;
+    // stop timer if running
+    stopTimer();
+    return {correct, total, score, medal};
+  }
+
+  function finishRun(){
+    // auto-check when time expires
+    checkAll();
+  }
+
+  // reveal toggle
+  function toggleReveal(){
+    reveal = !reveal;
+    revealBtn.textContent = reveal ? 'Скрыть' : 'Показать';
+    if(reveal){
+      // fill in correct answers for empty/wrong
+      grid.forEach(g=>{
+        if(g.inputEl.value.trim() === '' || String(parseInt(g.inputEl.value||'') ) !== String(g.ans)){
+          g.inputEl.value = String(g.ans);
+          g.inputEl.style.background = '#fff';
+        }
+      });
+    } else {
+      // remove revealed styling but do not clear user answers
+      grid.forEach(g=>{
+        g.inputEl.style.background = '';
+      });
+    }
+  }
+
+  // Start / Reset
+  startBtn.addEventListener('click', ()=>{
+    buildGrid();
+    startTimer();
+  });
+  resetBtn.addEventListener('click', ()=>{ resetAll(); });
+  checkBtn.addEventListener('click', ()=>{ checkAll(); });
+  revealBtn.addEventListener('click', ()=>{ toggleReveal(); });
+
+  // regenerate on option change but keep minimal changes: only rebuild grid
+  levelEl.addEventListener('change', ()=>{ if(!running) buildGrid(); });
+  sizeEl.addEventListener('change', ()=>{ if(!running) buildGrid(); });
+  modeSelect.addEventListener('change', ()=>{ if(!running) buildGrid(); });
+  timedEl.addEventListener('change', ()=>{ /* no rebuild required */ });
+
+  // initial build
+  buildGrid();
+
+  // small accessibility: allow Enter to check when focus is on any button
+  document.addEventListener('keydown',(e)=>{ if(e.key === 'F5'){ return; } });
+
+  // Save best in localStorage: when a run finishes successfully (all correct), store best score
+  function storeBest(res){
+    try{
+      if(!res) return;
+      const key = 'tables_best';
+      const prev = parseInt(localStorage.getItem(key)||'0',10) || 0;
+      if(res.score > prev){
+        localStorage.setItem(key, String(res.score));
+      }
+      // store last run summary
+      localStorage.setItem('tables_last', JSON.stringify(res));
+    } catch(e){ console.error(e); }
+  }
+
+  // Wrap checkAll to store best
+  const origCheckAll = checkAll;
+  window.checkAndStore = function(){
+    const res = origCheckAll();
+    storeBest(res);
+    return res;
+  };
+  // replace button handler to use wrapper
+  checkBtn.removeEventListener('click', ()=>{});
+  checkBtn.addEventListener('click', window.checkAndStore);
+
+})();
+</script>
+</body>
+</html>
