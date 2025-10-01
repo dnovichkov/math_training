@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Сантиметры и дециметры — Тренажёр (2 класс)</title>
+  <meta name="description" content="Упражнение: перевод см ↔ дм, измерения и суммирование длин. Упрощённый интерфейс: отдельные поля ответов, маркер на линейке."/>
+  <style>
+    :root{--bg:#f6fbff;--card:#fff;--accent:#2b8cff;--muted:#6b7280;--success:#2aa653;--error:#e03d3d}
+    *{box-sizing:border-box}
+    body{margin:0;padding:14px;font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background:var(--bg);color:#0f172a}
+    header{display:flex;gap:12px;align-items:center;max-width:980px;margin:0 auto 12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    h1{font-size:1.15rem;margin:0}
+    .meta{color:var(--muted);font-size:0.92rem}
+    main{max-width:980px;margin:0 auto;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.06)}
+    .controls{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+    .controls-row{display:flex;gap:8px;align-items:center}
+    select,input,button{padding:10px;border-radius:10px;border:1px solid #dbeafe;background:white}
+    .right{margin-left:auto;color:var(--muted)}
+
+    .game{display:flex;flex-direction:column;gap:12px}
+    .panel{padding:12px;border-radius:12px;background:linear-gradient(180deg,#fbfdff,#fff);border:1px solid #eef2ff}
+
+    .task{font-weight:800;font-size:1.4rem;text-align:center}
+
+    .ruler-wrap{display:flex;flex-direction:column;gap:8px;align-items:center}
+    .ruler{position:relative;width:100%;max-width:820px;height:84px;border-radius:8px;background:linear-gradient(180deg,#fff,#f2f9ff);border:1px solid #dbeafe;padding:14px 14px 48px}
+    .ruler-line{position:relative;height:28px;border-bottom:2px solid #cfe0ff;margin-top:8px}
+    .tick{position:absolute;bottom:24px;width:2px;background:#9fb8ff;transform:translateX(-50%)}
+    .tick-label{position:absolute;bottom:6px;font-size:0.8rem;color:#0f172a;transform:translateX(-50%)}
+
+    .answer-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:12px}
+    .answer-controls input{width:84px;text-align:center}
+    .marker-display{font-weight:700;color:#0f172a}
+
+    .actions{display:flex;gap:8px;justify-content:center;margin-top:12px}
+    .actions button{padding:10px;border-radius:10px}
+
+    .viz{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:12px}
+    .tens-anim{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+    .ten{width:20px;height:48px;background:#ffd88a;border-radius:4px}
+
+    .feedback{min-height:48px;font-weight:700;text-align:center;margin-top:8px}
+    .feedback.success{color:var(--success)}
+    .feedback.error{color:var(--error)}
+
+    .aside{display:flex;flex-direction:column;gap:10px}
+    @media(min-width:880px){.controls{flex-direction:row}.game{flex-direction:row}.aside{width:320px}}
+
+    /* Home button styles (consistent across exercises) */
+    .home-btn { display: inline-block; margin: 10px 0; padding: 10px 14px; font-size: 16px; background-color: #4CAF50; color: white; border-radius: 8px; text-decoration: none; }
+    .home-btn:hover { background-color: #45a049; }
+
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+  <a href="index.html" class="home-btn">🏠 На главную</a>
+
+  <header>
+    <div class="logo">М2</div>
+    <div>
+      <h1>Сантиметры и дециметры</h1>
+      <div class="meta">Переводы см ↔ дм, измерения и суммирование длин</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls" role="region" aria-label="Управление">
+      <div class="controls-row">
+        <label for="level" class="sr-only">Уровень</label>
+        <select id="level" aria-label="Уровень">
+          <option value="1">1 — Переводы (1 дм = 10 см)</option>
+          <option value="2">2 — Преобразование (дм + см → см или см → дм/см)</option>
+          <option value="3">3 — Суммирование длин</option>
+        </select>
+
+        <label for="seriesCount" class="sr-only">Длина серии</label>
+        <input id="seriesCount" type="number" min="1" max="50" value="8" aria-label="Длина серии" style="width:96px">
+
+        <div class="right">Лучший: <span id="best">—</span></div>
+      </div>
+
+      <div class="controls-row">
+        <input id="student" placeholder="Имя ученика (локально)" style="flex:1">
+        <div class="right">Прогресс: <span id="progress">0/8</span></div>
+      </div>
+    </div>
+
+    <section class="game" aria-labelledby="gameHeading">
+      <article class="panel">
+        <div class="task" id="taskText">—</div>
+
+        <div class="ruler-wrap">
+          <div class="ruler" id="ruler" role="img" aria-label="Линейка 0-100 см">
+            <div class="ruler-line" id="rulerLine"></div>
+          </div>
+
+          <!-- Marker display: shows the position on the ruler (индикатор), but does not auto-fill answer fields -->
+          <div class="answer-controls">
+            <div class="marker-display">Позиция на линейке: <span id="markerDisplay">0 см</span></div>
+
+            <!-- Answer inputs (only the relevant ones are shown) -->
+            <div id="answerCmWrap" style="display:none"><label>Ответ (см): <input id="answerCm" type="number" min="0" max="100"></label></div>
+            <div id="answerDmWrap" style="display:none"><label>Ответ (дм): <input id="answerDm" type="number" min="0" max="10"></label></div>
+            <div id="answerDmCmWrap" style="display:none"><label>дм: <input id="answerDmPart" type="number" min="0" max="10"></label> <label>см: <input id="answerCmPart" type="number" min="0" max="9"></label></div>
+
+          </div>
+
+          <div style="margin-top:6px;color:var(--muted);font-size:0.95rem;text-align:center">Нажмите на линейку, чтобы увидеть позицию. Вводите ответ в полях ниже.</div>
+        </div>
+
+        <div class="actions">
+          <button id="checkBtn">Проверить</button>
+          <button id="showBtn">Показать ответ</button>
+          <button id="nextBtn">Пропустить</button>
+        </div>
+
+        <div class="viz" aria-hidden="false">
+          <div class="tens-anim" id="tensAnim"></div>
+        </div>
+
+        <div id="feedback" class="feedback" role="status" aria-live="polite">&nbsp;</div>
+      </article>
+
+      <aside class="aside panel">
+        <h3 style="margin-top:0">Задания и подсказки</h3>
+        <div class="hint" id="hintBox">Выберите уровень и приступайте.</div>
+        <div style="margin-top:10px">Результат: <div id="resultSummary" style="margin-top:8px;color:var(--muted)">—</div></div>
+      </aside>
+    </section>
+  </main>
+
+  <footer style="max-width:980px;margin:12px auto 0;color:var(--muted)">Основано на программе: Моро М.И., Бантова М.А., Бельтюкова Г.В. — «Математика. 2 класс».</footer>
+
+<script>
+(function(){
+  const levelEl = document.getElementById('level');
+  const taskText = document.getElementById('taskText');
+  const ruler = document.getElementById('ruler');
+  const markerDisplay = document.getElementById('markerDisplay');
+  const answerCmWrap = document.getElementById('answerCmWrap');
+  const answerDmWrap = document.getElementById('answerDmWrap');
+  const answerDmCmWrap = document.getElementById('answerDmCmWrap');
+  const answerCm = document.getElementById('answerCm');
+  const answerDm = document.getElementById('answerDm');
+  const answerDmPart = document.getElementById('answerDmPart');
+  const answerCmPart = document.getElementById('answerCmPart');
+  const checkBtn = document.getElementById('checkBtn');
+  const showBtn = document.getElementById('showBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const feedback = document.getElementById('feedback');
+  const tensAnim = document.getElementById('tensAnim');
+  const hintBox = document.getElementById('hintBox');
+  const student = document.getElementById('student');
+  const best = document.getElementById('best');
+  const seriesCountEl = document.getElementById('seriesCount');
+  const progressEl = document.getElementById('progress');
+  const resultSummary = document.getElementById('resultSummary');
+
+  let markerCm = 0; // marker position
+  let a=0,b=0; // task data
+  let mode = '';
+
+  let seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'8',10));
+  let seriesCurrent = 0;
+  const advanceDelay = 500;
+
+  // restore
+  student.value = localStorage.getItem('sm_dm_student')||'';
+  const storedBest = parseInt(localStorage.getItem('sm_dm_best')||'0',10) || 0;
+  best.textContent = storedBest>0?('★'.repeat(Math.min(storedBest,3))):'—';
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+  function buildRuler(){
+    const existing = ruler.querySelectorAll('.tick, .tick-label');
+    existing.forEach(n=>n.remove());
+    for(let i=0;i<=100;i++){
+      const tick = document.createElement('div'); tick.className='tick'; tick.style.left = i + '%'; tick.style.height = (i%10===0?16:8)+'px'; ruler.appendChild(tick);
+      if(i%10===0){ const label = document.createElement('div'); label.className='tick-label'; label.textContent = i + ' см'; label.style.left = i+'%'; ruler.appendChild(label); }
+    }
+  }
+
+  // place marker and update display (marker is informational only)
+  let markerEl = null;
+  function placeMarker(cm){
+    markerCm = Math.max(0, Math.min(100, Math.round(cm)));
+    if(!markerEl){ markerEl = document.createElement('div'); markerEl.style.position='absolute'; markerEl.style.top='6px'; markerEl.style.width='12px'; markerEl.style.height='28px'; markerEl.style.background='rgba(255,120,0,0.9)'; markerEl.style.borderRadius='4px'; markerEl.style.transform='translateX(-50%)'; ruler.appendChild(markerEl); }
+    markerEl.style.left = markerCm + '%';
+    markerDisplay.textContent = markerCm + ' см';
+  }
+
+  // UI modes: show/hide answer fields
+  function showModeUI(md){
+    mode = md;
+    answerCmWrap.style.display = 'none';
+    answerDmWrap.style.display = 'none';
+    answerDmCmWrap.style.display = 'none';
+    answerCm.value = '';
+    answerDm.value = '';
+    answerDmPart.value = '';
+    answerCmPart.value = '';
+
+    if(md === 'dm2cm'){ answerCmWrap.style.display = ''; hintBox.textContent = 'Ответьте в сантиметрах.'; }
+    else if(md === 'cm2dm'){ answerDmWrap.style.display = ''; hintBox.textContent = 'Ответьте в дециметрах (округлите вниз).'; }
+    else if(md === 'mixed2cm'){ answerCmWrap.style.display = ''; hintBox.textContent = 'Приведите длину в сантиметрах.'; }
+    else if(md === 'cm2mixed'){ answerDmCmWrap.style.display = ''; hintBox.textContent = 'Разложите длину на дециметры и сантиметры.'; }
+    else if(md === 'sum'){ answerCmWrap.style.display = ''; hintBox.textContent = 'Суммируйте длины, ответ в сантиметрах.'; }
+  }
+
+  // generators
+  function genLevel1(){ // dm2cm or cm2dm
+    if(Math.random()<0.5){ // dm -> cm
+      const dm = randInt(1,9); a = dm; b = null; taskText.textContent = `Сколько сантиметров в ${dm} дм?`; showModeUI('dm2cm');
+    } else { const cm = randInt(1,90); a = cm; b = null; taskText.textContent = `Сколько дециметров в ${cm} см? (округлите вниз)`; showModeUI('cm2dm'); }
+  }
+
+  function genLevel2(){ // mixed transform and reverse
+    if(Math.random()<0.6){ const dm = randInt(0,9); const cm = randInt(0,9); a=dm; b=cm; taskText.textContent = `${dm} дм ${cm} см → сколько см?`; showModeUI('mixed2cm'); }
+    else { const cm = randInt(1,99); a = cm; b = null; taskText.textContent = `${cm} см → сколько дм и см?`; showModeUI('cm2mixed'); }
+  }
+
+  function genLevel3(){ const dm1 = randInt(0,6); const cm1 = randInt(0,9); const dm2 = randInt(0,6); const cm2 = randInt(0,9); a = dm1*10 + cm1; b = dm2*10 + cm2; taskText.textContent = `${dm1} дм ${cm1} см + ${dm2} дм ${cm2} см = ? (в см)`; showModeUI('sum'); }
+
+  function genTask(){ const lvl = Number(levelEl.value); if(lvl===1) genLevel1(); else if(lvl===2) genLevel2(); else genLevel3(); placeMarker(0); feedback.textContent=''; updateProgress(); }
+
+  // check answers
+  function checkAnswer(){ const md = mode; if(md==='dm2cm'){ const expect = a*10; const val = parseInt(answerCm.value||'',10); if(val===expect) ok(); else wrong('Ожидалось '+expect+' см'); }
+    else if(md==='cm2dm'){ const expect = Math.floor(a/10); const val = parseInt(answerDm.value||'',10); if(val===expect) ok(); else wrong('Ожидалось '+expect+' дм'); }
+    else if(md==='mixed2cm'){ const expect = a*10 + b; const val = parseInt(answerCm.value||'',10); if(val===expect) ok(); else wrong('Ожидалось '+expect+' см'); }
+    else if(md==='cm2mixed'){ const expectDm = Math.floor(a/10); const expectCm = a%10; const valDm = parseInt(answerDmPart.value||'',10); const valCm = parseInt(answerCmPart.value||'',10); if(valDm===expectDm && valCm===expectCm) ok(); else wrong('Ожидалось '+expectDm+' дм '+expectCm+' см'); }
+    else if(md==='sum'){ const expect = a + b; const val = parseInt(answerCm.value||'',10); if(val===expect) ok(); else wrong('Ожидалось '+expect+' см'); }
+  }
+
+  function ok(){ feedback.className='feedback success'; feedback.textContent='Правильно!'; animateTensForAnswer(); saveResult(true); seriesCurrent +=1; updateProgress(); if(seriesCurrent >= seriesTotal){ setTimeout(endSeries, advanceDelay); } else { setTimeout(()=>{ genTask(); }, 900); } }
+  function wrong(msg){ feedback.className='feedback error'; feedback.textContent = msg; saveResult(false); }
+
+  function showAnswer(){ const md = mode; if(md==='dm2cm'){ answerCm.value = String(a*10); placeMarker(a*10); feedback.textContent='Ответ показан.'; }
+    else if(md==='cm2dm'){ answerDm.value = String(Math.floor(a/10)); feedback.textContent='Ответ показан.'; }
+    else if(md==='mixed2cm'){ answerCm.value = String(a*10 + b); placeMarker(a*10 + b); feedback.textContent='Ответ показан.'; }
+    else if(md==='cm2mixed'){ answerDmPart.value = String(Math.floor(a/10)); answerCmPart.value = String(a%10); placeMarker(a); feedback.textContent='Ответ показан.'; }
+    else if(md==='sum'){ answerCm.value = String(a + b); placeMarker(a + b); feedback.textContent='Ответ показан.'; } }
+
+  function animateTensForAnswer(){ let cm = 0; if(mode==='dm2cm') cm = parseInt(answerCm.value||'0',10); else if(mode==='mixed2cm') cm = parseInt(answerCm.value||'0',10); else if(mode==='sum') cm = parseInt(answerCm.value||'0',10); else if(mode==='cm2mixed') cm = parseInt(answerDmPart.value||'0',10)*10 + parseInt(answerCmPart.value||'0',10); else cm = 0; tensAnim.innerHTML=''; const tens = Math.floor(cm/10); for(let i=0;i<tens;i++){ const el = document.createElement('div'); el.className='ten'; el.style.opacity='0'; tensAnim.appendChild(el); setTimeout(()=>{ el.style.transition='opacity 420ms ease, transform 420ms'; el.style.opacity='1'; el.style.transform='translateY(-6px)'; }, i*120); } setTimeout(()=>{ tensAnim.innerHTML=''; }, 1800 + tens*120); }
+
+  function saveResult(ok){ let streak = parseInt(localStorage.getItem('sm_dm_streak')||'0',10); let bestv = parseInt(localStorage.getItem('sm_dm_best')||'0',10) || 0; if(ok){ streak +=1; if(streak>bestv) bestv=streak; } else streak=0; localStorage.setItem('sm_dm_streak',String(streak)); localStorage.setItem('sm_dm_best',String(bestv)); localStorage.setItem('sm_dm_student', student.value || ''); best.textContent = bestv>0?('★'.repeat(Math.min(bestv,3))):'—'; resultSummary.textContent = 'Последний: '+(ok?'правильно':'неправильно')+'. Серия: '+streak+'. Лучшее: '+bestv+'.'; }
+
+  function endSeries(){ feedback.className='feedback success'; feedback.textContent = 'Серия завершена! Правильных: '+seriesCurrent+'/'+seriesTotal; disableAll(true); }
+  function disableAll(d){ checkBtn.disabled=d; showBtn.disabled=d; nextBtn.disabled=d; seriesCountEl.disabled=d; levelEl.disabled=d; }
+
+  function updateProgress(){ seriesTotal = Math.max(1, parseInt(seriesCountEl.value||'8',10)); progressEl.textContent = seriesCurrent + '/' + seriesTotal; }
+  function resetSeries(){ seriesCurrent = 0; updateProgress(); disableAll(false); genTask(); }
+
+  // events
+  checkBtn.addEventListener('click', checkAnswer);
+  showBtn.addEventListener('click', showAnswer);
+  nextBtn.addEventListener('click', ()=>{ genTask(); });
+  levelEl.addEventListener('change', ()=>{ resetSeries(); });
+  seriesCountEl.addEventListener('change', ()=>{ resetSeries(); });
+
+  ruler.addEventListener('click',(e)=>{ const rect = ruler.getBoundingClientRect(); const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); const cm = Math.round(pct * 100); placeMarker(cm); });
+
+  window.addEventListener('resize', ()=>{ buildRuler(); placeMarker(markerCm); });
+
+  // init
+  buildRuler(); resetSeries();
+})();
+</script>
+</body>
+</html>
